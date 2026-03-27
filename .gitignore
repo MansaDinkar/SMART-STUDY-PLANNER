@@ -1,0 +1,10 @@
+﻿.env
+.vscode/
+instance/
+smart-study-planner-*.json
+__pycache__/
+*.py[cod]
+*.class
+.venv/
+venv/
+env/

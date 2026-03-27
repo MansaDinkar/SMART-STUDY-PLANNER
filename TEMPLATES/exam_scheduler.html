@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Exam Scheduler – Smart Study Planner</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root { --ink:#0f1623; --paper:#f5f0e8; --accent:#2d6a4f; --gold:#e9c46a; --muted:#6b7280; --white:#ffffff; --danger:#dc2626; --sidebar-w:240px; }
+    body { font-family:'DM Sans',sans-serif; background:#f0ece2; color:var(--ink); display:flex; min-height:100vh; }
+    .sidebar { width:var(--sidebar-w); background:var(--ink); display:flex; flex-direction:column; padding:2rem 1.2rem; position:fixed; top:0; left:0; bottom:0; z-index:50; }
+    .sidebar-brand { font-family:'Playfair Display',serif; font-size:1.3rem; color:var(--white); text-decoration:none; margin-bottom:2.5rem; display:block; }
+    .sidebar-brand span { color:var(--gold); }
+    .nav-section-label { font-size:0.65rem; text-transform:uppercase; letter-spacing:1.5px; color:rgba(255,255,255,0.3); margin-bottom:0.6rem; padding-left:0.6rem; }
+    .sidebar-nav { list-style:none; margin-bottom:1.5rem; }
+    .sidebar-nav li { margin-bottom:0.25rem; }
+    .nav-link { display:flex; align-items:center; gap:0.75rem; padding:0.65rem 0.8rem; border-radius:8px; color:rgba(255,255,255,0.6); text-decoration:none; font-size:0.9rem; transition:all 0.2s; }
+    .nav-link:hover,.nav-link.active { background:rgba(255,255,255,0.1); color:var(--white); }
+    .nav-link.active { background:var(--accent); }
+    .nav-icon { font-size:1.1rem; width:1.4rem; text-align:center; }
+    .sidebar-bottom { margin-top:auto; }
+    .user-card { display:flex; align-items:center; gap:0.75rem; padding:0.8rem; background:rgba(255,255,255,0.07); border-radius:10px; }
+    .user-avatar { width:36px; height:36px; border-radius:50%; background:var(--accent); display:flex; align-items:center; justify-content:center; font-family:'Playfair Display',serif; font-size:1rem; color:var(--white); }
+    .user-name { font-size:0.85rem; font-weight:500; color:var(--white); }
+    .user-role { font-size:0.72rem; color:rgba(255,255,255,0.4); }
+    .logout-link { display:flex; align-items:center; gap:0.6rem; color:rgba(255,255,255,0.4); text-decoration:none; font-size:0.82rem; padding:0.4rem 0.8rem; border-radius:6px; transition:color 0.2s,background 0.2s; margin-top:0.5rem; }
+    .logout-link:hover { color:#ef4444; background:rgba(239,68,68,0.1); }
+    .main { margin-left:var(--sidebar-w); flex:1; padding:2.5rem; animation:fadeUp 0.5s ease both; }
+    .topbar { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:2rem; }
+    .page-title { font-family:'Playfair Display',serif; font-size:1.8rem; }
+    .page-sub { font-size:0.88rem; color:var(--muted); margin-top:0.2rem; }
+    .btn { display:inline-flex; align-items:center; gap:0.4rem; padding:0.6rem 1.2rem; border-radius:8px; font-family:'DM Sans',sans-serif; font-size:0.88rem; font-weight:500; cursor:pointer; border:none; transition:all 0.2s; }
+    .btn-solid { background:var(--accent); color:var(--white); }
+    .btn-solid:hover { background:#1f4d38; }
+    .btn-sm { padding:0.35rem 0.75rem; font-size:0.78rem; }
+    .btn-ai { background:var(--gold); color:var(--ink); font-weight:700; padding:0.85rem 2rem; border-radius:10px; border:none; cursor:pointer; font-size:0.95rem; font-family:'DM Sans',sans-serif; transition:all 0.2s; }
+    .btn-ai:hover { background:#d4af37; transform:translateY(-1px); }
+    .btn-ai:disabled { opacity:0.6; cursor:not-allowed; transform:none; }
+    .card { background:var(--white); border-radius:14px; border:1px solid #e8e0d4; overflow:hidden; margin-bottom:1.5rem; }
+    .card-head { display:flex; justify-content:space-between; align-items:center; padding:1.2rem 1.5rem; border-bottom:1px solid #f0ece4; }
+    .card-head h2 { font-family:'Playfair Display',serif; font-size:1.05rem; }
+    .card-body { padding:1.5rem; }
+    label { display:block; font-size:0.78rem; font-weight:500; text-transform:uppercase; letter-spacing:0.8px; color:var(--ink); margin-bottom:0.4rem; }
+    input[type="text"],input[type="number"],input[type="date"],select { width:100%; padding:0.7rem 0.9rem; border:1.5px solid #ddd6c8; border-radius:8px; font-family:'DM Sans',sans-serif; font-size:0.9rem; background:var(--white); color:var(--ink); outline:none; transition:border-color 0.2s,box-shadow 0.2s; }
+    input:focus,select:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(45,106,79,0.1); }
+    .config-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); gap:1rem; }
+    .subjects-list { display:flex; flex-direction:column; gap:1rem; }
+    .subject-item { background:#faf7f2; border:1.5px solid #e8e0d4; border-radius:12px; padding:1.2rem 1.4rem; position:relative; }
+    .subject-header { display:grid; grid-template-columns:2fr 0.8fr 1.1fr; gap:0.8rem; align-items:end; margin-bottom:1rem; }
+    .subject-num { width:22px; height:22px; border-radius:50%; background:var(--accent); color:#fff; font-size:0.7rem; font-weight:700; display:inline-flex; align-items:center; justify-content:center; margin-right:0.3rem; }
+    .remove-subject { position:absolute; top:0.9rem; right:0.9rem; background:#fee2e2; border:none; color:var(--danger); border-radius:6px; width:26px; height:26px; cursor:pointer; font-size:0.85rem; display:flex; align-items:center; justify-content:center; }
+    .topic-tags { display:flex; flex-wrap:wrap; gap:0.4rem; margin-top:0.5rem; min-height:24px; }
+    .topic-tag { display:inline-flex; align-items:center; gap:0.3rem; background:rgba(45,106,79,0.1); color:var(--accent); border-radius:20px; padding:0.25rem 0.65rem; font-size:0.78rem; font-weight:500; }
+    .topic-tag button { background:none; border:none; cursor:pointer; font-size:0.72rem; color:var(--accent); padding:0; line-height:1; }
+    .topic-tag button:hover { color:var(--danger); }
+    .topic-row { display:flex; gap:0.5rem; margin-top:0.5rem; }
+    .topic-row input { flex:1; }
+    .btn-add-topic { padding:0.5rem 0.9rem; background:rgba(45,106,79,0.1); color:var(--accent); border:1px solid rgba(45,106,79,0.2); border-radius:8px; font-size:0.82rem; cursor:pointer; font-family:'DM Sans',sans-serif; transition:all 0.2s; white-space:nowrap; }
+    .btn-add-topic:hover { background:rgba(45,106,79,0.2); }
+    .btn-add-subject { width:100%; padding:0.75rem; border:2px dashed #ddd6c8; border-radius:12px; background:transparent; font-family:'DM Sans',sans-serif; font-size:0.9rem; color:var(--muted); cursor:pointer; margin-top:0.5rem; transition:all 0.2s; }
+    .btn-add-subject:hover { border-color:var(--accent); color:var(--accent); }
+    .gen-banner { background:linear-gradient(135deg,#0f1623 0%,#1b4332 60%,#2d6a4f 100%); border-radius:16px; padding:2rem 2.5rem; display:flex; align-items:center; justify-content:space-between; gap:1.5rem; flex-wrap:wrap; color:#fff; box-shadow:0 8px 32px rgba(15,22,35,0.2); margin-bottom:1.5rem; }
+    .gen-banner h2 { font-family:'Playfair Display',serif; font-size:1.3rem; margin-bottom:0.3rem; }
+    .gen-banner p { font-size:0.83rem; color:rgba(255,255,255,0.6); }
+    .ai-badge { display:inline-flex; align-items:center; gap:0.4rem; background:rgba(233,196,106,0.2); color:var(--gold); border:1px solid rgba(233,196,106,0.3); border-radius:20px; padding:0.25rem 0.8rem; font-size:0.72rem; font-weight:600; letter-spacing:1px; text-transform:uppercase; margin-bottom:0.6rem; }
+    .loading-wrap { text-align:center; padding:3rem 2rem; display:none; }
+    .loading-wrap.on { display:block; }
+    .spinner { width:48px; height:48px; border:4px solid #e8e0d4; border-top-color:var(--accent); border-radius:50%; animation:spin 0.8s linear infinite; margin:0 auto 1.2rem; }
+    .loading-wrap h3 { font-family:'Playfair Display',serif; font-size:1.1rem; margin-bottom:0.5rem; }
+    .loading-wrap p { font-size:0.85rem; color:var(--muted); }
+    .schedule-out { display:none; }
+    .schedule-out.on { display:block; }
+    .sched-stats { display:flex; gap:1.2rem; margin-bottom:1.5rem; flex-wrap:wrap; }
+    .sstat { background:rgba(45,106,79,0.07); border-radius:10px; padding:0.8rem 1.4rem; text-align:center; border:1px solid rgba(45,106,79,0.12); }
+    .sstat-num { display:block; font-family:'Playfair Display',serif; font-size:1.5rem; color:var(--accent); }
+    .sstat-lbl { font-size:0.72rem; text-transform:uppercase; letter-spacing:0.8px; color:var(--muted); }
+    .timeline { position:relative; }
+    .timeline::before { content:''; position:absolute; left:24px; top:0; bottom:0; width:2px; background:linear-gradient(to bottom,var(--accent),rgba(45,106,79,0.08)); }
+    .week-label { margin-left:50px; margin-bottom:0.3rem; margin-top:1rem; font-size:0.7rem; text-transform:uppercase; letter-spacing:1.5px; color:var(--muted); font-weight:600; }
+    .day-row { display:flex; gap:1.2rem; margin-bottom:0.6rem; }
+    .day-dot-wrap { width:50px; flex-shrink:0; display:flex; justify-content:center; }
+    .day-dot { width:12px; height:12px; border-radius:50%; background:var(--accent); border:3px solid #f0ece2; z-index:1; margin-top:1rem; }
+    .day-dot.exam { background:var(--danger); }
+    .day-dot.rev { background:var(--gold); }
+    .day-inner { flex:1; background:var(--white); border-radius:12px; border:1px solid #e8e0d4; overflow:hidden; transition:box-shadow 0.2s; }
+    .day-inner:hover { box-shadow:0 4px 16px rgba(0,0,0,0.07); }
+    .day-inner.exam-style { border-color:rgba(220,38,38,0.3); }
+    .day-head { display:flex; align-items:center; gap:1rem; padding:0.85rem 1.2rem; cursor:pointer; background:#faf7f2; transition:background 0.15s; flex-wrap:wrap; }
+    .day-head:hover { background:#f0ece2; }
+    .day-date { min-width:110px; }
+    .day-date strong { display:block; font-size:0.88rem; }
+    .day-date span { font-size:0.74rem; color:var(--muted); }
+    .day-subject-tag { display:inline-block; padding:0.2rem 0.7rem; border-radius:20px; font-size:0.78rem; font-weight:500; flex:1; }
+    .day-hrs { background:rgba(45,106,79,0.1); color:var(--accent); border-radius:20px; padding:0.2rem 0.65rem; font-size:0.78rem; font-weight:500; white-space:nowrap; }
+    .day-expand-btn { background:none; border:none; cursor:pointer; font-size:0.9rem; color:var(--muted); transition:transform 0.2s; margin-left:auto; }
+    .day-expand-btn.open { transform:rotate(180deg); }
+    .day-body { display:none; padding:1rem 1.2rem; border-top:1px solid #f0ece4; font-size:0.85rem; }
+    .day-body.open { display:block; }
+    .day-body ul { padding-left:1.2rem; margin:0.4rem 0 0.8rem; }
+    .day-body li { margin-bottom:0.2rem; }
+    .day-tip { background:rgba(233,196,106,0.15); border-left:3px solid var(--gold); padding:0.5rem 0.8rem; border-radius:0 6px 6px 0; font-size:0.8rem; color:#92400e; margin-top:0.5rem; }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes spin { to{transform:rotate(360deg)} }
+    @media(max-width:768px) { .sidebar{display:none} .main{margin-left:0;padding:1.5rem} .subject-header{grid-template-columns:1fr 1fr} }
+    @media print { .sidebar,.gen-banner,.card:nth-child(-n+2),.btn,button{display:none!important} .main{margin-left:0} .day-body{display:block!important} }
+  </style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <a href="{{ url_for('index') }}" class="sidebar-brand">Smart<span>Study</span></a>
+  <p class="nav-section-label">Main Menu</p>
+  <ul class="sidebar-nav">
+    <li><a href="{{ url_for('dashboard') }}"      class="nav-link"><span class="nav-icon">🏠</span> Dashboard</a></li>
+    <li><a href="{{ url_for('study_plans') }}"    class="nav-link"><span class="nav-icon">📅</span> Study Plans</a></li>
+    <li><a href="{{ url_for('pdf_notes') }}"      class="nav-link"><span class="nav-icon">📄</span> PDF Notes</a></li>
+    <li><a href="{{ url_for('chatbot') }}"        class="nav-link"><span class="nav-icon">🤖</span> PDF Chatbot</a></li>
+    <li><a href="{{ url_for('exam_scheduler') }}" class="nav-link active"><span class="nav-icon">🗓️</span> Exam Scheduler</a></li>
+  </ul>
+  {% if session.get('user_role') == 'admin' %}
+  <p class="nav-section-label">Admin</p>
+  <ul class="sidebar-nav">
+    <li><a href="{{ url_for('admin_panel') }}" class="nav-link"><span class="nav-icon">🛡️</span> Admin Panel</a></li>
+  </ul>
+  {% endif %}
+  <div class="sidebar-bottom">
+    <div class="user-card">
+      <div class="user-avatar">{{ session.get('user_name','U')[0].upper() }}</div>
+      <div>
+        <div class="user-name">{{ session.get('user_name','User') }}</div>
+        <div class="user-role">{{ session.get('user_role','student') }}</div>
+      </div>
+    </div>
+    <a href="{{ url_for('logout') }}" class="logout-link">⬅️ Logout</a>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div>
+      <h1 class="page-title">Exam Scheduler</h1>
+      <p class="page-sub">Plan every study day from today till your exam — subject by subject, topic by topic.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><h2>⚙️ Schedule Settings</h2></div>
+    <div class="card-body">
+      <div class="config-grid">
+        <div><label for="startDate">Start Date</label><input type="date" id="startDate"/></div>
+        <div><label for="examDate">Exam Date</label><input type="date" id="examDate"/></div>
+        <div><label for="hoursPerDay">Study Hours / Day</label><input type="number" id="hoursPerDay" value="4" min="1" max="14" step="0.5"/></div>
+        <div>
+          <label for="restDays">Rest Days</label>
+          <select id="restDays">
+            <option value="none">No rest days</option>
+            <option value="sunday" selected>Sundays off</option>
+            <option value="saturday">Saturdays off</option>
+            <option value="weekend">Weekends off</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h2>📚 Subjects &amp; Topics</h2>
+      <span id="subCount" style="font-size:0.82rem;color:var(--muted);">0 subject(s)</span>
+    </div>
+    <div class="card-body">
+      <div class="subjects-list" id="subjectsList"></div>
+      <button class="btn-add-subject" onclick="addSubject()">＋ Add Subject</button>
+    </div>
+  </div>
+
+  <div class="gen-banner">
+    <div>
+      <div class="ai-badge">✨ AI-Powered</div>
+      <h2>Generate your exam study schedule</h2>
+      <p>AI distributes subjects and topics optimally across all your available days.</p>
+    </div>
+    <button class="btn-ai" id="genBtn" onclick="generate()">✨ Generate Schedule</button>
+  </div>
+
+  <div class="loading-wrap" id="loadWrap">
+    <div class="spinner"></div>
+    <h3>Building your study plan…</h3>
+    <p>AI is distributing topics intelligently across your days.</p>
+  </div>
+
+  <div class="schedule-out" id="schedOut">
+    <div class="card">
+      <div class="card-head">
+        <h2 id="schedTitle">📅 Your Study Schedule</h2>
+        <div style="display:flex;gap:0.6rem;">
+          <button class="btn btn-sm btn-solid" onclick="window.print()">🖨️ Print</button>
+          <button class="btn btn-sm" style="background:#f0ece2;color:var(--ink);" onclick="document.getElementById('schedOut').classList.remove('on')">↩ Reset</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="sched-stats" id="schedStats"></div>
+        <p style="font-size:0.8rem;color:var(--muted);margin-bottom:1rem;">Click any day to expand topics ↓</p>
+        <div class="timeline" id="timeline"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+let subjects=[],sid=0;
+const COLORS=['#2d6a4f','#1d4ed8','#7c3aed','#b45309','#be185d','#0369a1','#166534','#9d174d'];
+const BGCOL=['rgba(45,106,79,0.1)','rgba(29,78,216,0.1)','rgba(124,58,237,0.1)','rgba(180,83,9,0.1)','rgba(190,24,93,0.1)','rgba(3,105,161,0.1)','rgba(22,101,52,0.1)','rgba(157,23,77,0.1)'];
+
+window.addEventListener('DOMContentLoaded',()=>{
+  const t=new Date(),s=new Date(t),e=new Date(t);
+  s.setDate(t.getDate()+1); e.setDate(t.getDate()+30);
+  document.getElementById('startDate').value=fd(s);
+  document.getElementById('examDate').value=fd(e);
+  addSubject('Mathematics'); addSubject('Physics'); addSubject('Chemistry');
+});
+
+function fd(d){return d.toISOString().split('T')[0];}
+function addSubject(name=''){subjects.push({id:++sid,name,priority:3,examDate:'',topics:[]});render();}
+function removeSub(id){subjects=subjects.filter(s=>s.id!==id);render();}
+function updSub(id,f,v){const s=subjects.find(s=>s.id===id);if(s)s[f]=v;}
+
+function render(){
+  document.getElementById('subCount').textContent=subjects.length+' subject(s)';
+  document.getElementById('subjectsList').innerHTML=subjects.map((s,i)=>`
+    <div class="subject-item">
+      <button class="remove-subject" onclick="removeSub(${s.id})">✕</button>
+      <div class="subject-header">
+        <div>
+          <label><span class="subject-num">${i+1}</span> Subject Name</label>
+          <input type="text" value="${esc(s.name)}" placeholder="e.g. Mathematics" oninput="updSub(${s.id},'name',this.value)"/>
+        </div>
+        <div>
+          <label>Priority (1–5)</label>
+          <select onchange="updSub(${s.id},'priority',parseInt(this.value))">
+            ${[1,2,3,4,5].map(n=>`<option value="${n}"${s.priority==n?' selected':''}>${n}</option>`).join('')}
+          </select>
+        </div>
+        <div>
+          <label>Subject Exam Date</label>
+          <input type="date" value="${s.examDate}" onchange="updSub(${s.id},'examDate',this.value)"/>
+        </div>
+      </div>
+      <div>
+        <label style="margin-top:0.2rem;">Topics / Chapters <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:0.74rem;color:var(--muted);">(Enter or + to add)</span></label>
+        <div class="topic-tags" id="tags-${s.id}">${s.topics.map((t,ti)=>tTag(s.id,ti,t)).join('')}</div>
+        <div class="topic-row">
+          <input type="text" id="ti-${s.id}" placeholder="e.g. Newton's Laws of Motion" onkeydown="if(event.key==='Enter'){event.preventDefault();addTopic(${s.id});}"/>
+          <button class="btn-add-topic" onclick="addTopic(${s.id})">+ Add</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function tTag(sid,ti,t){return `<span class="topic-tag">${esc(t)}<button onclick="rmTopic(${sid},${ti})">✕</button></span>`;}
+function addTopic(sid){
+  const inp=document.getElementById(`ti-${sid}`),val=inp.value.trim();if(!val)return;
+  const s=subjects.find(s=>s.id===sid);if(!s)return;
+  s.topics.push(val);inp.value='';
+  document.getElementById(`tags-${sid}`).innerHTML=s.topics.map((t,i)=>tTag(sid,i,t)).join('');
+}
+function rmTopic(sid,ti){
+  const s=subjects.find(s=>s.id===sid);if(!s)return;
+  s.topics.splice(ti,1);
+  document.getElementById(`tags-${sid}`).innerHTML=s.topics.map((t,i)=>tTag(sid,i,t)).join('');
+}
+
+async function generate(){
+  const startDate=document.getElementById('startDate').value;
+  const examDate=document.getElementById('examDate').value;
+  const hpd=parseFloat(document.getElementById('hoursPerDay').value)||4;
+  const rest=document.getElementById('restDays').value;
+  const vsubs=subjects.filter(s=>s.name.trim());
+  if(!startDate||!examDate){alert('Set start and exam dates.');return;}
+  if(new Date(examDate)<=new Date(startDate)){alert('Exam date must be after start date.');return;}
+  if(!vsubs.length){alert('Add at least one subject.');return;}
+  document.getElementById('genBtn').disabled=true;
+  document.getElementById('loadWrap').classList.add('on');
+  document.getElementById('schedOut').classList.remove('on');
+  const subData=vsubs.map(s=>({name:s.name.trim(),priority:s.priority,examDate:s.examDate||null,topics:s.topics}));
+  const prompt=`You are an exam study planner. Generate a day-by-day study schedule as a JSON array.\n\nSettings:\n- Start: ${startDate}\n- Main exam: ${examDate}\n- Hours/day: ${hpd}\n- Rest days rule: ${rest} (none=no skip, sunday=skip Sundays, saturday=skip Saturdays, weekend=skip both)\n- Subjects: ${JSON.stringify(subData)}\n\nInstructions:\n1. Skip rest days per the rule.\n2. Allocate more days to higher-priority subjects.\n3. If a subject has its own examDate, front-load it before that date.\n4. Spread topics across days (2-3 per session).\n5. Add a practical study tip per day.\n6. Last day before main exam = revision (type:"revision").\n7. Main exam date = type:"exam", hours:0.\n\nOutput ONLY a raw JSON array, no markdown:\n[{"date":"YYYY-MM-DD","subject":"Name","hours":${hpd},"type":"study","topics":["A","B"],"tip":"tip"},...]`;
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:4000,messages:[{role:'user',content:prompt}]})});
+    const data=await res.json();
+    let txt=(data.content||[]).map(c=>c.text||'').join('');
+    txt=txt.replace(/```json\s*/gi,'').replace(/```\s*/gi,'').trim();
+    const m=txt.match(/\[[\s\S]*\]/);if(!m)throw new Error();
+    renderSched(JSON.parse(m[0]),examDate,hpd);
+  }catch(e){renderSched(localGen(subData,startDate,examDate,hpd,rest),examDate,hpd);}
+  finally{document.getElementById('loadWrap').classList.remove('on');document.getElementById('genBtn').disabled=false;}
+}
+
+function localGen(subs,startDate,examDate,hpd,rest){
+  const days=[];
+  for(let d=new Date(startDate+'T00:00:00');d<new Date(examDate+'T00:00:00');d.setDate(d.getDate()+1)){
+    const w=d.getDay();
+    const skip=(rest==='sunday'&&w===0)||(rest==='saturday'&&w===6)||(rest==='weekend'&&(w===0||w===6));
+    if(!skip)days.push(fd(new Date(d)));
+  }
+  const tw=subs.reduce((s,sub)=>s+sub.priority,0);
+  const out=[];let idx=0;
+  const tips=['Use Pomodoro: 25 min focus, 5 min break.','Write key formulas — writing aids memory.','Close the book and recall everything after reading.','Solve problems before re-reading theory.','Teach the topic aloud to yourself.','Review yesterday\'s notes for 10 min first.','Draw diagrams to visualize concepts.','Mix old and new topics using spaced repetition.','Make a one-page summary cheat sheet.','Study the hardest topic when energy is highest.'];
+  subs.forEach(sub=>{
+    const alloc=Math.max(1,Math.round((sub.priority/tw)*days.length));
+    const tc=[...(sub.topics||[])];
+    for(let i=0;i<alloc&&idx<days.length;i++,idx++){
+      const chunk=tc.splice(0,3);if(!chunk.length&&sub.topics.length)chunk.push(...sub.topics.slice(0,2));
+      out.push({date:days[idx],subject:sub.name,hours:hpd,type:'study',topics:chunk.length?chunk:[sub.name+' – Core concepts'],tip:tips[idx%tips.length]});
+    }
+  });
+  while(idx<days.length){
+    const sub=subs[idx%subs.length];
+    out.push({date:days[idx],subject:sub.name+' – Revision',hours:hpd,type:'revision',topics:['Review all chapter notes','Solve practice problems','Write a concept summary'],tip:'Revision day — focus on your weak spots.'});
+    idx++;
+  }
+  out.push({date:examDate,subject:'🎯 EXAM DAY',hours:0,type:'exam',topics:["You've prepared well — trust yourself!"],tip:'Sleep 7-8 hrs the night before. Eat well. Arrive early.'});
+  return out.sort((a,b)=>a.date.localeCompare(b.date));
+}
+
+function renderSched(sched,examDate,hpd){
+  if(!sched||!sched.length){alert('Could not build schedule.');return;}
+  const usubs=[...new Set(sched.filter(d=>d.type!=='exam').map(d=>d.subject.replace(' – Revision','')))];
+  const totalH=sched.reduce((s,d)=>s+(d.hours||0),0);
+  const studyDays=sched.filter(d=>d.type!=='exam').length;
+  document.getElementById('schedStats').innerHTML=`
+    <div class="sstat"><span class="sstat-num">${studyDays}</span><span class="sstat-lbl">Study Days</span></div>
+    <div class="sstat"><span class="sstat-num">${usubs.length}</span><span class="sstat-lbl">Subjects</span></div>
+    <div class="sstat"><span class="sstat-num">${totalH}h</span><span class="sstat-lbl">Total Hours</span></div>
+    <div class="sstat"><span class="sstat-num">${hpd}h</span><span class="sstat-lbl">Per Day</span></div>`;
+  let html='',curWk=-1;
+  sched.forEach((day,i)=>{
+    const dt=new Date(day.date+'T00:00:00');
+    const wk=Math.ceil(((dt-new Date(dt.getFullYear(),0,1))/86400000+1)/7);
+    if(wk!==curWk){curWk=wk;html+=`<div class="week-label">Week of ${dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div>`;}
+    const dow=dt.toLocaleDateString('en-US',{weekday:'short'});
+    const ds=dt.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    const isExam=day.type==='exam'||day.date===examDate;
+    const isRev=day.type==='revision';
+    const base=day.subject.replace(' – Revision','');
+    const ci=usubs.indexOf(base)%COLORS.length;
+    const color=COLORS[Math.max(0,ci)],bg=BGCOL[Math.max(0,ci%BGCOL.length)];
+    const dotCls=isExam?'exam':isRev?'rev':'';
+    const innerCls=isExam?'exam-style':'';
+    const topics=(day.topics||[]).map(t=>`<li>${esc(t)}</li>`).join('');
+    const tip=day.tip?`<div class="day-tip">💡 ${esc(day.tip)}</div>`:'';
+    html+=`<div class="day-row">
+      <div class="day-dot-wrap"><div class="day-dot ${dotCls}"></div></div>
+      <div class="day-inner ${innerCls}">
+        <div class="day-head" onclick="tog(${i})">
+          <div class="day-date"><strong>${dow}, ${ds}</strong><span>${isExam?'🎯 Exam Day':isRev?'🔁 Revision':'📖 Study'}</span></div>
+          <span class="day-subject-tag" style="background:${bg};color:${color};">${esc(day.subject)}</span>
+          <span class="day-hrs">${day.hours?day.hours+'h':'Exam!'}</span>
+          <button class="day-expand-btn" id="eb${i}">▾</button>
+        </div>
+        <div class="day-body" id="db${i}">
+          ${topics?`<strong style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.7px;color:var(--muted);">Topics:</strong><ul style="margin-top:0.4rem;">${topics}</ul>`:''}
+          ${tip}
+        </div>
+      </div>
+    </div>`;
+  });
+  document.getElementById('timeline').innerHTML=html;
+  const ed=new Date(examDate+'T00:00:00');
+  document.getElementById('schedTitle').textContent=`📅 Schedule → ${ed.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}`;
+  document.getElementById('schedOut').classList.add('on');
+  setTimeout(()=>document.getElementById('schedOut').scrollIntoView({behavior:'smooth',block:'start'}),100);
+}
+
+function tog(i){document.getElementById('db'+i).classList.toggle('open');document.getElementById('eb'+i).classList.toggle('open');}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+</script>
+</body>
+</html>

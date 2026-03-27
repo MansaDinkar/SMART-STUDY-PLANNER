@@ -1,0 +1,9 @@
+flask-sqlalchemy
+flask
+werkzeug
+PyPDF2
+firebase-admin
+google-cloud-firestore
+cloudinary
+groq
+python-dotenv

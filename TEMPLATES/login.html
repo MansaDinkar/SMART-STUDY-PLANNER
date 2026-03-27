@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login – Smart Study Planner</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink:    #0f1623;
+      --paper:  #f5f0e8;
+      --accent: #2d6a4f;
+      --gold:   #e9c46a;
+      --muted:  #6b7280;
+      --white:  #ffffff;
+      --danger: #dc2626;
+      --success:#16a34a;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--paper);
+      color: var(--ink);
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    /* ── LEFT PANEL ── */
+    .left-panel {
+      background: var(--ink);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 4rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .left-panel::before {
+      content: '';
+      position: absolute;
+      width: 350px; height: 350px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(45,106,79,0.35), transparent 70%);
+      top: -80px; left: -80px;
+    }
+    .left-panel::after {
+      content: '';
+      position: absolute;
+      width: 250px; height: 250px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(233,196,106,0.15), transparent 70%);
+      bottom: 40px; right: -60px;
+    }
+    .brand {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.6rem;
+      color: var(--white);
+      margin-bottom: 3rem;
+      position: relative; z-index: 1;
+    }
+    .brand span { color: var(--gold); }
+    .left-headline {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.8rem, 3vw, 2.6rem);
+      color: var(--white);
+      line-height: 1.25;
+      margin-bottom: 1.2rem;
+      position: relative; z-index: 1;
+    }
+    .left-headline em {
+      font-style: normal;
+      color: var(--gold);
+    }
+    .left-sub {
+      color: rgba(255,255,255,0.5);
+      font-size: 0.95rem;
+      line-height: 1.7;
+      max-width: 380px;
+      position: relative; z-index: 1;
+    }
+    .left-stats {
+      display: flex;
+      gap: 2rem;
+      margin-top: 3rem;
+      position: relative; z-index: 1;
+    }
+    .stat { }
+    .stat-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.8rem;
+      color: var(--gold);
+    }
+    .stat-label {
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.4);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* ── RIGHT PANEL ── */
+    .right-panel {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 4rem;
+      animation: fadeUp 0.6s ease both;
+    }
+    .form-header { margin-bottom: 2.2rem; }
+    .form-header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 2rem;
+      margin-bottom: 0.4rem;
+    }
+    .form-header p {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .form-header p a {
+      color: var(--accent);
+      font-weight: 500;
+      text-decoration: none;
+    }
+    .form-header p a:hover { text-decoration: underline; }
+
+    /* ── FORM ── */
+    .form-group { margin-bottom: 1.4rem; }
+    label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--ink);
+      margin-bottom: 0.5rem;
+    }
+    .input-wrap {
+      position: relative;
+    }
+    .input-icon {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1rem;
+      pointer-events: none;
+    }
+    input[type="email"],
+    input[type="password"],
+    input[type="text"] {
+      width: 100%;
+      padding: 0.85rem 1rem 0.85rem 2.8rem;
+      border: 1.5px solid #ddd6c8;
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      background: var(--white);
+      color: var(--ink);
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+    input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(45,106,79,0.12);
+    }
+    input.error { border-color: var(--danger); }
+
+    .form-row-end {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 0.4rem;
+    }
+    .forgot-link {
+      font-size: 0.82rem;
+      color: var(--muted);
+      text-decoration: none;
+    }
+    .forgot-link:hover { color: var(--accent); }
+
+    .btn-submit {
+      width: 100%;
+      padding: 0.9rem;
+      background: var(--accent);
+      color: var(--white);
+      border: none;
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      margin-top: 0.5rem;
+    }
+    .btn-submit:hover { background: #1f4d38; }
+    .btn-submit:active { transform: scale(0.99); }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin: 1.5rem 0;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #ddd6c8;
+    }
+
+    .register-link {
+      text-align: center;
+      margin-top: 1.5rem;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+    .register-link a {
+      color: var(--accent);
+      font-weight: 500;
+      text-decoration: none;
+    }
+    .register-link a:hover { text-decoration: underline; }
+
+    /* ── FLASH ── */
+    .flash-container {
+      margin-bottom: 1.2rem;
+    }
+    .flash {
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+    }
+    .flash-danger  { background: #fee2e2; color: #991b1b; border-left: 3px solid var(--danger); }
+    .flash-success { background: #d1fae5; color: #065f46; border-left: 3px solid var(--success); }
+    .flash-info    { background: #dbeafe; color: #1e40af; border-left: 3px solid #3b82f6; }
+    .flash-warning { background: #fef3c7; color: #92400e; border-left: 3px solid var(--gold); }
+
+    /* ── PASSWORD TOGGLE ── */
+    .toggle-pw {
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+      color: var(--muted);
+      padding: 0;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 768px) {
+      body { grid-template-columns: 1fr; }
+      .left-panel { display: none; }
+      .right-panel { padding: 2.5rem 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- LEFT PANEL -->
+<div class="left-panel">
+  <div class="brand">Smart<span>Study</span></div>
+  <h2 class="left-headline">
+    Welcome<br>back,<br><em>scholar.</em>
+  </h2>
+  <p class="left-sub">
+    Log in to access your personalized study plans, uploaded notes, and the PDF chatbot — all waiting for you.
+  </p>
+  <div class="left-stats">
+    <div class="stat">
+      <div class="stat-num">4+</div>
+      <div class="stat-label">Modules</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">∞</div>
+      <div class="stat-label">Plans</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">24/7</div>
+      <div class="stat-label">Access</div>
+    </div>
+  </div>
+</div>
+
+<!-- RIGHT PANEL -->
+<div class="right-panel">
+  <div class="form-header">
+    <h1>Sign in</h1>
+    <p>Don't have an account? <a href="{{ url_for('register') }}">Register here</a></p>
+  </div>
+
+  <!-- Flash messages -->
+  <div class="flash-container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="flash flash-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+  </div>
+
+  <form method="POST" action="{{ url_for('login') }}" novalidate>
+
+    <div class="form-group">
+      <label for="email">Email Address</label>
+      <div class="input-wrap">
+        <span class="input-icon">✉️</span>
+        <input type="email" id="email" name="email"
+               placeholder="you@example.com" required
+               value="{{ request.form.get('email', '') }}"/>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="password">Password</label>
+      <div class="input-wrap">
+        <span class="input-icon">🔒</span>
+        <input type="password" id="password" name="password"
+               placeholder="Enter your password" required/>
+        <button type="button" class="toggle-pw" onclick="togglePw()">👁️</button>
+      </div>
+      <div class="form-row-end">
+        <a href="#" class="forgot-link">Forgot password?</a>
+      </div>
+    </div>
+
+    <button type="submit" class="btn-submit">Sign In →</button>
+
+  </form>
+
+  <div class="divider">or</div>
+
+  <div class="register-link">
+    New to Smart Study Planner? <a href="{{ url_for('register') }}">Create an account</a>
+  </div>
+</div>
+
+<script>
+  function togglePw() {
+    const pw = document.getElementById('password');
+    pw.type = pw.type === 'password' ? 'text' : 'password';
+  }
+</script>
+</body>
+</html>

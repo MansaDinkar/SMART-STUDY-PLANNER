@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PDF Notes – Smart Study Planner</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --ink: #0f1623; --paper: #f5f0e8; --accent: #2d6a4f;
+      --gold: #e9c46a; --muted: #6b7280; --white: #ffffff;
+      --danger: #dc2626; --success: #16a34a; --sidebar-w: 240px;
+    }
+    body { font-family: 'DM Sans', sans-serif; background: #f0ece2; color: var(--ink); display: flex; min-height: 100vh; }
+
+    /* SIDEBAR (same as other pages) */
+    .sidebar { width: var(--sidebar-w); background: var(--ink); display: flex; flex-direction: column; padding: 2rem 1.2rem; position: fixed; top: 0; left: 0; bottom: 0; z-index: 50; }
+    .sidebar-brand { font-family: 'Playfair Display', serif; font-size: 1.3rem; color: var(--white); text-decoration: none; margin-bottom: 2.5rem; display: block; }
+    .sidebar-brand span { color: var(--gold); }
+    .nav-section-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1.5px; color: rgba(255,255,255,0.3); margin-bottom: 0.6rem; padding-left: 0.6rem; }
+    .sidebar-nav { list-style: none; margin-bottom: 1.5rem; }
+    .sidebar-nav li { margin-bottom: 0.25rem; }
+    .nav-link { display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 0.8rem; border-radius: 8px; color: rgba(255,255,255,0.6); text-decoration: none; font-size: 0.9rem; transition: all 0.2s; }
+    .nav-link:hover, .nav-link.active { background: rgba(255,255,255,0.1); color: var(--white); }
+    .nav-link.active { background: var(--accent); }
+    .nav-icon { font-size: 1.1rem; width: 1.4rem; text-align: center; }
+    .sidebar-bottom { margin-top: auto; }
+    .user-card { display: flex; align-items: center; gap: 0.75rem; padding: 0.8rem; background: rgba(255,255,255,0.07); border-radius: 10px; margin-bottom: 0.6rem; }
+    .user-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', serif; font-size: 1rem; color: var(--white); }
+    .user-name { font-size: 0.85rem; font-weight: 500; color: var(--white); }
+    .user-role { font-size: 0.72rem; color: rgba(255,255,255,0.4); }
+    .logout-link { display: flex; align-items: center; gap: 0.6rem; color: rgba(255,255,255,0.4); text-decoration: none; font-size: 0.82rem; padding: 0.4rem 0.8rem; border-radius: 6px; transition: color 0.2s, background 0.2s; }
+    .logout-link:hover { color: #ef4444; background: rgba(239,68,68,0.1); }
+
+    /* MAIN */
+    .main { margin-left: var(--sidebar-w); flex: 1; padding: 2.5rem; animation: fadeUp 0.5s ease both; }
+    .topbar { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem; }
+    .page-title { font-family: 'Playfair Display', serif; font-size: 1.8rem; }
+    .page-sub { font-size: 0.88rem; color: var(--muted); margin-top: 0.2rem; }
+
+    .btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.6rem 1.2rem; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; font-weight: 500; text-decoration: none; cursor: pointer; border: none; transition: all 0.2s; }
+    .btn-solid { background: var(--accent); color: var(--white); }
+    .btn-solid:hover { background: #1f4d38; }
+    .btn-danger { background: #fee2e2; color: var(--danger); }
+    .btn-danger:hover { background: #fecaca; }
+    .btn-sm { padding: 0.35rem 0.75rem; font-size: 0.78rem; }
+
+    .flash-container { margin-bottom: 1.2rem; }
+    .flash { padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.88rem; font-weight: 500; margin-bottom: 0.5rem; }
+    .flash-danger  { background: #fee2e2; color: #991b1b; border-left: 3px solid var(--danger); }
+    .flash-success { background: #d1fae5; color: #065f46; border-left: 3px solid var(--success); }
+
+    /* UPLOAD ZONE */
+    .upload-zone {
+      background: var(--white);
+      border-radius: 14px;
+      border: 2px dashed #ddd6c8;
+      padding: 3rem 2rem;
+      text-align: center;
+      margin-bottom: 1.5rem;
+      transition: border-color 0.2s, background 0.2s;
+      cursor: pointer;
+      position: relative;
+    }
+    .upload-zone.dragover {
+      border-color: var(--accent);
+      background: rgba(45,106,79,0.04);
+    }
+    .upload-icon { font-size: 3rem; margin-bottom: 1rem; }
+    .upload-zone h3 { font-family: 'Playfair Display', serif; font-size: 1.2rem; margin-bottom: 0.5rem; }
+    .upload-zone p { color: var(--muted); font-size: 0.88rem; margin-bottom: 1.5rem; }
+    .upload-form-row { display: flex; gap: 1rem; justify-content: center; align-items: flex-end; flex-wrap: wrap; }
+    .upload-input-group { text-align: left; }
+    label.field-label { display: block; font-size: 0.78rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.8px; color: var(--ink); margin-bottom: 0.4rem; }
+    input[type="text"], input[type="file"], select {
+      padding: 0.65rem 0.9rem; border: 1.5px solid #ddd6c8; border-radius: 8px;
+      font-family: 'DM Sans', sans-serif; font-size: 0.88rem; background: var(--white);
+      color: var(--ink); outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(45,106,79,0.1); }
+    input[type="file"] { padding: 0.5rem 0.9rem; background: var(--paper); cursor: pointer; }
+    #fileLabel { display: inline-block; padding: 0.7rem 1.5rem; background: var(--paper); border: 1.5px solid #ddd6c8; border-radius: 8px; cursor: pointer; font-size: 0.88rem; color: var(--muted); transition: all 0.2s; }
+    #fileLabel:hover { border-color: var(--accent); color: var(--accent); }
+    #fileHidden { display: none; }
+    #fileNameDisplay { font-size: 0.82rem; color: var(--accent); margin-top: 0.4rem; }
+
+    /* PDF GRID */
+    .section-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem; }
+    .section-head h2 { font-family: 'Playfair Display', serif; font-size: 1.1rem; }
+    .pdf-count { font-size: 0.82rem; color: var(--muted); }
+
+    .pdf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.2rem; }
+    .pdf-card {
+      background: var(--white);
+      border-radius: 12px;
+      border: 1px solid #e8e0d4;
+      overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .pdf-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+    .pdf-card-top {
+      background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+      padding: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+    }
+    .pdf-card-body { padding: 1.2rem; }
+    .pdf-card-name { font-weight: 500; font-size: 0.92rem; margin-bottom: 0.4rem; word-break: break-word; line-height: 1.4; }
+    .pdf-card-meta { font-size: 0.78rem; color: var(--muted); margin-bottom: 1rem; }
+    .pdf-subject-tag { display: inline-block; padding: 0.2rem 0.6rem; background: rgba(45,106,79,0.1); color: var(--accent); border-radius: 20px; font-size: 0.72rem; font-weight: 500; margin-bottom: 0.3rem; }
+    .pdf-card-actions { display: flex; gap: 0.5rem; }
+
+    .empty-state { text-align: center; padding: 3rem; color: var(--muted); background: var(--white); border-radius: 14px; border: 1px solid #e8e0d4; }
+    .empty-icon { font-size: 2.5rem; margin-bottom: 0.8rem; }
+    .empty-state h3 { font-family: 'Playfair Display', serif; font-size: 1.05rem; color: var(--ink); margin-bottom: 0.4rem; }
+
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+    @media (max-width: 768px) { .sidebar { display: none; } .main { margin-left: 0; padding: 1.5rem; } }
+  </style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <a href="{{ url_for('index') }}" class="sidebar-brand">Smart<span>Study</span></a>
+  <p class="nav-section-label">Main Menu</p>
+  <ul class="sidebar-nav">
+    <li><a href="{{ url_for('dashboard') }}"   class="nav-link"><span class="nav-icon">🏠</span> Dashboard</a></li>
+    <li><a href="{{ url_for('study_plans') }}" class="nav-link"><span class="nav-icon">📅</span> Study Plans</a></li>
+    <li><a href="{{ url_for('pdf_notes') }}"   class="nav-link active"><span class="nav-icon">📄</span> PDF Notes</a></li>
+    <li><a href="{{ url_for('chatbot') }}"     class="nav-link"><span class="nav-icon">🤖</span> PDF Chatbot</a></li>
+  </ul>
+  {% if session.get('user_role') == 'admin' %}
+  <p class="nav-section-label">Admin</p>
+  <ul class="sidebar-nav">
+    <li><a href="{{ url_for('admin_panel') }}" class="nav-link"><span class="nav-icon">🛡️</span> Admin Panel</a></li>
+  </ul>
+  {% endif %}
+  <div class="sidebar-bottom">
+    <div class="user-card">
+      <div class="user-avatar">{{ session.get('user_name','U')[0].upper() }}</div>
+      <div>
+        <div class="user-name">{{ session.get('user_name','User') }}</div>
+        <div class="user-role">{{ session.get('user_role','student') }}</div>
+      </div>
+    </div>
+    <a href="{{ url_for('logout') }}" class="logout-link">⬅️ Logout</a>
+  </div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div>
+      <h1 class="page-title">PDF Notes</h1>
+      <p class="page-sub">Upload and manage your study materials.</p>
+    </div>
+  </div>
+
+  <div class="flash-container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="flash flash-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+  </div>
+
+  <!-- UPLOAD ZONE -->
+  <div class="upload-zone" id="dropZone">
+    <div class="upload-icon">📤</div>
+    <h3>Upload Study Material</h3>
+    <p>Drag & drop a PDF here, or select one below. Max 16 MB.</p>
+    <form method="POST" action="{{ url_for('upload_pdf') }}" enctype="multipart/form-data" id="uploadForm">
+      <div class="upload-form-row">
+        <div class="upload-input-group">
+          <label class="field-label" for="fileHidden">PDF File</label>
+          <label for="fileHidden" id="fileLabel">📂 Choose PDF file</label>
+          <input type="file" id="fileHidden" name="pdf_file" accept=".pdf" required onchange="showFileName(this)"/>
+          <div id="fileNameDisplay"></div>
+        </div>
+        <div class="upload-input-group">
+          <label class="field-label" for="subject">Subject (optional)</label>
+          <input type="text" id="subject" name="subject" placeholder="e.g. Physics" style="width:180px;"/>
+        </div>
+        <div>
+          <label class="field-label">&nbsp;</label>
+          <button type="submit" class="btn btn-solid">Upload PDF</button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- PDF GRID -->
+  <div class="section-head">
+    <h2>Your Uploaded Materials</h2>
+    <span class="pdf-count">{{ pdfs|length }} file(s)</span>
+  </div>
+
+  {% if pdfs %}
+  <div class="pdf-grid">
+    {% for pdf in pdfs %}
+    <div class="pdf-card">
+      <div class="pdf-card-top">📕</div>
+      <div class="pdf-card-body">
+        <div class="pdf-card-name">{{ pdf.original_name }}</div>
+        <div>
+          {% if pdf.subject %}
+            <span class="pdf-subject-tag">{{ pdf.subject }}</span>
+          {% endif %}
+        </div>
+        <div class="pdf-card-meta">Uploaded {{ pdf.upload_date.strftime('%b %d, %Y') }}</div>
+        <div class="pdf-card-actions">
+          <a href="{{ url_for('chatbot') }}?pdf_id={{ pdf.id }}" class="btn btn-sm btn-solid">🤖 Ask Chatbot</a>
+          <form method="POST" action="{{ url_for('delete_pdf', pdf_id=pdf.id) }}"
+                onsubmit="return confirm('Delete this PDF?');">
+            <button type="submit" class="btn btn-sm btn-danger">🗑</button>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <div class="empty-icon">📄</div>
+    <h3>No PDFs uploaded yet</h3>
+    <p>Upload your study materials above to get started with the PDF chatbot.</p>
+  </div>
+  {% endif %}
+</main>
+
+<script>
+function showFileName(input) {
+  const display = document.getElementById('fileNameDisplay');
+  const label   = document.getElementById('fileLabel');
+  if (input.files && input.files[0]) {
+    display.textContent = '✅ ' + input.files[0].name;
+    label.textContent   = '📂 Change file';
+  }
+}
+
+// Drag & drop
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileHidden');
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('dragover');
+  const files = e.dataTransfer.files;
+  if (files.length) {
+    fileInput.files = files;
+    showFileName(fileInput);
+  }
+});
+</script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+

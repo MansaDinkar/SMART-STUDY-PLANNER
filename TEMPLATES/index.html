@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Smart Study Planner</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink:    #0f1623;
+      --paper:  #f5f0e8;
+      --accent: #2d6a4f;
+      --gold:   #e9c46a;
+      --muted:  #6b7280;
+      --white:  #ffffff;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--paper);
+      color: var(--ink);
+      overflow-x: hidden;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; width: 100%; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.2rem 5%;
+      background: rgba(245,240,232,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(15,22,35,0.08);
+    }
+    .nav-logo {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
+      color: var(--ink);
+      text-decoration: none;
+      letter-spacing: -0.5px;
+    }
+    .nav-logo span { color: var(--accent); }
+    .nav-links { display: flex; gap: 1rem; }
+    .btn {
+      display: inline-block;
+      padding: 0.55rem 1.4rem;
+      border-radius: 6px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 500;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: none;
+    }
+    .btn-outline {
+      border: 1.5px solid var(--ink);
+      color: var(--ink);
+      background: transparent;
+    }
+    .btn-outline:hover { background: var(--ink); color: var(--white); }
+    .btn-solid {
+      background: var(--accent);
+      color: var(--white);
+    }
+    .btn-solid:hover { background: #1f4d38; }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      padding: 7rem 5% 4rem;
+      gap: 3rem;
+    }
+    .hero-text { animation: fadeUp 0.8s ease both; }
+    .hero-tag {
+      display: inline-block;
+      background: var(--gold);
+      color: var(--ink);
+      font-size: 0.75rem;
+      font-weight: 500;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      padding: 0.3rem 0.8rem;
+      border-radius: 4px;
+      margin-bottom: 1.5rem;
+    }
+    .hero-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.5rem, 5vw, 4rem);
+      line-height: 1.15;
+      color: var(--ink);
+      margin-bottom: 1.2rem;
+    }
+    .hero-title em {
+      font-style: normal;
+      color: var(--accent);
+    }
+    .hero-sub {
+      font-size: 1.05rem;
+      color: var(--muted);
+      line-height: 1.7;
+      max-width: 480px;
+      margin-bottom: 2.5rem;
+    }
+    .hero-cta { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .btn-lg { padding: 0.8rem 2rem; font-size: 1rem; border-radius: 8px; }
+
+    /* ── HERO VISUAL ── */
+    .hero-visual {
+      animation: fadeUp 0.8s 0.2s ease both;
+      display: flex;
+      justify-content: center;
+    }
+    .card-stack {
+      position: relative;
+      width: 340px;
+      height: 380px;
+    }
+    .study-card {
+      position: absolute;
+      background: var(--white);
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    }
+    .study-card.main {
+      width: 300px; top: 40px; left: 20px;
+      border-left: 4px solid var(--accent);
+    }
+    .study-card.back {
+      width: 280px; top: 10px; left: 50px;
+      background: var(--accent);
+      color: var(--white);
+      z-index: -1;
+      transform: rotate(3deg);
+    }
+    .card-label {
+      font-size: 0.7rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      margin-bottom: 0.8rem;
+    }
+    .back .card-label { color: rgba(255,255,255,0.7); }
+    .card-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+    }
+    .subject-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #f0ece4;
+      font-size: 0.88rem;
+    }
+    .subject-row:last-child { border-bottom: none; }
+    .subject-hours {
+      background: var(--paper);
+      padding: 0.2rem 0.6rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: var(--accent);
+    }
+    .progress-bar-wrap {
+      background: #e8e0d4;
+      border-radius: 20px;
+      height: 6px;
+      margin-top: 1rem;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--gold);
+      border-radius: 20px;
+      width: 65%;
+    }
+    .progress-label {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 0.4rem;
+    }
+
+    /* ── FEATURES ── */
+    .features {
+      padding: 5rem 5%;
+      background: var(--ink);
+      color: var(--white);
+    }
+    .section-header {
+      text-align: center;
+      margin-bottom: 3.5rem;
+    }
+    .section-header h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.8rem, 3vw, 2.8rem);
+      margin-bottom: 0.8rem;
+    }
+    .section-header p {
+      color: rgba(255,255,255,0.55);
+      font-size: 1rem;
+      max-width: 500px;
+      margin: 0 auto;
+      line-height: 1.7;
+    }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.5rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .feature-card {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 2rem;
+      transition: transform 0.2s, background 0.2s;
+    }
+    .feature-card:hover {
+      transform: translateY(-4px);
+      background: rgba(255,255,255,0.1);
+    }
+    .feature-icon {
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+    .feature-card h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.15rem;
+      margin-bottom: 0.6rem;
+    }
+    .feature-card p {
+      font-size: 0.88rem;
+      color: rgba(255,255,255,0.55);
+      line-height: 1.65;
+    }
+
+    /* ── HOW IT WORKS ── */
+    .how {
+      padding: 5rem 5%;
+      background: var(--paper);
+    }
+    .how .section-header h2 { color: var(--ink); }
+    .how .section-header p  { color: var(--muted); }
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 2rem;
+      max-width: 900px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    .step-num {
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: var(--white);
+      font-family: 'Playfair Display', serif;
+      font-size: 1.2rem;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 1rem;
+    }
+    .step h4 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.05rem;
+      margin-bottom: 0.5rem;
+    }
+    .step p { font-size: 0.88rem; color: var(--muted); line-height: 1.6; }
+
+    /* ── CTA BANNER ── */
+    .cta-banner {
+      padding: 5rem 5%;
+      background: var(--accent);
+      color: var(--white);
+      text-align: center;
+    }
+    .cta-banner h2 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.8rem, 3vw, 2.5rem);
+      margin-bottom: 1rem;
+    }
+    .cta-banner p {
+      color: rgba(255,255,255,0.75);
+      margin-bottom: 2rem;
+      font-size: 1rem;
+    }
+    .btn-gold {
+      background: var(--gold);
+      color: var(--ink);
+    }
+    .btn-gold:hover { background: #d4af37; }
+
+    /* ── FOOTER ── */
+    footer {
+      background: var(--ink);
+      color: rgba(255,255,255,0.4);
+      text-align: center;
+      padding: 1.5rem 5%;
+      font-size: 0.82rem;
+    }
+    footer span { color: rgba(255,255,255,0.7); }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(28px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── FLASH MESSAGES ── */
+    .flash-container {
+      position: fixed; top: 72px; right: 1.5rem; z-index: 999;
+      display: flex; flex-direction: column; gap: 0.5rem;
+    }
+    .flash {
+      padding: 0.75rem 1.2rem;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 500;
+      animation: fadeUp 0.3s ease both;
+    }
+    .flash-success { background: #d1fae5; color: #065f46; }
+    .flash-danger  { background: #fee2e2; color: #991b1b; }
+    .flash-info    { background: #dbeafe; color: #1e40af; }
+    .flash-warning { background: #fef3c7; color: #92400e; }
+
+    @media (max-width: 768px) {
+      .hero { grid-template-columns: 1fr; text-align: center; }
+      .hero-cta { justify-content: center; }
+      .hero-visual { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Flash Messages -->
+<div class="flash-container">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}
+      <div class="flash flash-{{ category }}">{{ message }}</div>
+    {% endfor %}
+  {% endwith %}
+</div>
+
+<!-- NAV -->
+<nav>
+  <a href="{{ url_for('index') }}" class="nav-logo">Smart<span>Study</span></a>
+  <div class="nav-links">
+    <a href="{{ url_for('login') }}"    class="btn btn-outline">Login</a>
+    <a href="{{ url_for('register') }}" class="btn btn-solid">Get Started</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-text">
+    <div class="hero-tag">📚 Academic Planner</div>
+    <h1 class="hero-title">
+      Study <em>smarter,</em><br>not harder.
+    </h1>
+    <p class="hero-sub">
+      Organize your schedule, manage your study materials, and get instant
+      answers from your uploaded notes — all in one clean platform.
+    </p>
+    <div class="hero-cta">
+      <a href="{{ url_for('register') }}" class="btn btn-solid btn-lg">Get Started Free</a>
+      <a href="{{ url_for('login') }}"    class="btn btn-outline btn-lg">Login</a>
+    </div>
+  </div>
+
+  <div class="hero-visual">
+    <div class="card-stack">
+      <div class="study-card back">
+        <div class="card-label">This Week</div>
+        <div class="card-title">Study Plan</div>
+      </div>
+      <div class="study-card main">
+        <div class="card-label">Today's Schedule</div>
+        <div class="card-title">My Study Plan</div>
+        <div class="subject-row">
+          <span>Mathematics</span>
+          <span class="subject-hours">3 hrs</span>
+        </div>
+        <div class="subject-row">
+          <span>Physics</span>
+          <span class="subject-hours">2 hrs</span>
+        </div>
+        <div class="subject-row">
+          <span>Chemistry</span>
+          <span class="subject-hours">1.5 hrs</span>
+        </div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar-fill"></div>
+        </div>
+        <div class="progress-label">65% completed today</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features">
+  <div class="section-header">
+    <h2>Everything you need to excel</h2>
+    <p>A complete toolkit designed for students who take their academics seriously.</p>
+  </div>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">📅</div>
+      <h3>Smart Scheduling</h3>
+      <p>Create personalized study plans based on your subjects, available hours, and exam dates.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📄</div>
+      <h3>PDF Notes Manager</h3>
+      <p>Upload and organize your study materials by subject. Access them anytime, anywhere.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🤖</div>
+      <h3>PDF Chatbot</h3>
+      <p>Ask questions and get instant answers sourced directly from your uploaded documents.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📊</div>
+      <h3>Progress Tracking</h3>
+      <p>Mark tasks as complete and visualize your daily and weekly study progress at a glance.</p>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how">
+  <div class="section-header">
+    <h2>How it works</h2>
+    <p>Get started in minutes and take control of your academic journey.</p>
+  </div>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <h4>Create an Account</h4>
+      <p>Register with your name and email. It's free and takes under a minute.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <h4>Build Your Plan</h4>
+      <p>Add your subjects, study hours, and schedule dates to generate your plan.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <h4>Upload Your Notes</h4>
+      <p>Upload PDF study materials subject-wise to power the chatbot.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <h4>Ask & Learn</h4>
+      <p>Query your documents and get targeted answers straight from your notes.</p>
+    </div>
+  </div>
+</section>
+
+<!-- CTA BANNER -->
+<section class="cta-banner">
+  <h2>Ready to plan your success?</h2>
+  <p>Join students who are already studying smarter with Smart Study Planner.</p>
+  <a href="{{ url_for('register') }}" class="btn btn-gold btn-lg">Start for Free</a>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p>© 2025 <span>Smart Study Planner</span> · CSE 2025-26 · SNMIMT</p>
+</footer>
+
+</body>
+</html>

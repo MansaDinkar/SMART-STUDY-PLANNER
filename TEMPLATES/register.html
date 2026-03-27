@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Register – Smart Study Planner</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink:     #0f1623;
+      --paper:   #f5f0e8;
+      --accent:  #2d6a4f;
+      --gold:    #e9c46a;
+      --muted:   #6b7280;
+      --white:   #ffffff;
+      --danger:  #dc2626;
+      --success: #16a34a;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--paper);
+      color: var(--ink);
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+    }
+
+    /* ── LEFT VISUAL PANEL ── */
+    .left-panel {
+      background: var(--accent);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 4rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .left-panel::before {
+      content: '';
+      position: absolute;
+      width: 400px; height: 400px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(233,196,106,0.2), transparent 70%);
+      top: -100px; right: -100px;
+    }
+    .left-panel::after {
+      content: '';
+      position: absolute;
+      width: 300px; height: 300px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(15,22,35,0.2), transparent 70%);
+      bottom: -60px; left: -60px;
+    }
+
+    .brand {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.6rem;
+      color: var(--white);
+      margin-bottom: 3rem;
+      position: relative; z-index: 1;
+    }
+    .brand span { color: var(--gold); }
+
+    .left-headline {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.8rem, 3vw, 2.6rem);
+      color: var(--white);
+      line-height: 1.25;
+      margin-bottom: 1.2rem;
+      position: relative; z-index: 1;
+    }
+    .left-headline em {
+      font-style: normal;
+      color: var(--gold);
+    }
+    .left-sub {
+      color: rgba(255,255,255,0.7);
+      font-size: 0.95rem;
+      line-height: 1.7;
+      max-width: 380px;
+      position: relative; z-index: 1;
+    }
+
+    .feature-list {
+      margin-top: 2.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+      position: relative; z-index: 1;
+    }
+    .feature-item {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      color: rgba(255,255,255,0.85);
+      font-size: 0.9rem;
+    }
+    .feature-check {
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.75rem;
+      flex-shrink: 0;
+    }
+
+    /* ── RIGHT FORM PANEL ── */
+    .right-panel {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 3.5rem 4rem;
+      overflow-y: auto;
+      animation: fadeUp 0.6s ease both;
+    }
+
+    .form-header { margin-bottom: 2rem; }
+    .form-header h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 2rem;
+      margin-bottom: 0.4rem;
+    }
+    .form-header p {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+    .form-header p a {
+      color: var(--accent);
+      font-weight: 500;
+      text-decoration: none;
+    }
+    .form-header p a:hover { text-decoration: underline; }
+
+    /* Flash messages */
+    .flash-container { margin-bottom: 1.2rem; }
+    .flash {
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+    }
+    .flash-danger  { background: #fee2e2; color: #991b1b; border-left: 3px solid var(--danger); }
+    .flash-success { background: #d1fae5; color: #065f46; border-left: 3px solid var(--success); }
+    .flash-info    { background: #dbeafe; color: #1e40af; border-left: 3px solid #3b82f6; }
+    .flash-warning { background: #fef3c7; color: #92400e; border-left: 3px solid var(--gold); }
+
+    /* Two-column row */
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .form-group { margin-bottom: 1.2rem; }
+    label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--ink);
+      margin-bottom: 0.45rem;
+    }
+    .input-wrap { position: relative; }
+    .input-icon {
+      position: absolute;
+      left: 1rem; top: 50%;
+      transform: translateY(-50%);
+      font-size: 1rem;
+      pointer-events: none;
+    }
+    input[type="text"],
+    input[type="email"],
+    input[type="password"] {
+      width: 100%;
+      padding: 0.8rem 1rem 0.8rem 2.8rem;
+      border: 1.5px solid #ddd6c8;
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.92rem;
+      background: var(--white);
+      color: var(--ink);
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+    input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(45,106,79,0.12);
+    }
+
+    /* Role selector */
+    .role-selector {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.7rem;
+      margin-bottom: 1.2rem;
+    }
+    .role-option { display: none; }
+    .role-label {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.75rem 1rem;
+      border: 1.5px solid #ddd6c8;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+      background: var(--white);
+    }
+    .role-option:checked + .role-label {
+      border-color: var(--accent);
+      background: rgba(45,106,79,0.07);
+      color: var(--accent);
+      font-weight: 500;
+    }
+    .role-icon { font-size: 1.2rem; }
+
+    /* Password strength */
+    .strength-bar {
+      height: 4px;
+      border-radius: 4px;
+      background: #e8e0d4;
+      margin-top: 0.4rem;
+      overflow: hidden;
+    }
+    .strength-fill {
+      height: 100%;
+      border-radius: 4px;
+      width: 0%;
+      transition: width 0.3s, background 0.3s;
+    }
+    .strength-text {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 0.25rem;
+    }
+
+    /* Password toggle */
+    .toggle-pw {
+      position: absolute;
+      right: 1rem; top: 50%;
+      transform: translateY(-50%);
+      background: none; border: none;
+      cursor: pointer; font-size: 1rem;
+      color: var(--muted); padding: 0;
+    }
+
+    .role-section-label {
+      font-size: 0.8rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--ink);
+      margin-bottom: 0.45rem;
+      display: block;
+    }
+
+    .btn-submit {
+      width: 100%;
+      padding: 0.9rem;
+      background: var(--accent);
+      color: var(--white);
+      border: none;
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      margin-top: 0.4rem;
+    }
+    .btn-submit:hover { background: #1f4d38; }
+    .btn-submit:active { transform: scale(0.99); }
+
+    .terms {
+      font-size: 0.78rem;
+      color: var(--muted);
+      text-align: center;
+      margin-top: 1rem;
+      line-height: 1.5;
+    }
+
+    .login-link {
+      text-align: center;
+      margin-top: 1.5rem;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+    .login-link a {
+      color: var(--accent);
+      font-weight: 500;
+      text-decoration: none;
+    }
+    .login-link a:hover { text-decoration: underline; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 900px) {
+      .form-row { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 768px) {
+      body { grid-template-columns: 1fr; }
+      .left-panel { display: none; }
+      .right-panel { padding: 2.5rem 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- LEFT PANEL -->
+<div class="left-panel">
+  <div class="brand">Smart<span>Study</span></div>
+  <h2 class="left-headline">
+    Start your<br><em>academic</em><br>journey.
+  </h2>
+  <p class="left-sub">
+    Create your free account and get access to personalized study scheduling, PDF notes management, and an intelligent chatbot.
+  </p>
+  <div class="feature-list">
+    <div class="feature-item">
+      <div class="feature-check">✓</div>
+      <span>Personalized study schedule generation</span>
+    </div>
+    <div class="feature-item">
+      <div class="feature-check">✓</div>
+      <span>Upload and organize PDF study materials</span>
+    </div>
+    <div class="feature-item">
+      <div class="feature-check">✓</div>
+      <span>PDF chatbot for instant doubt clarification</span>
+    </div>
+    <div class="feature-item">
+      <div class="feature-check">✓</div>
+      <span>Track your daily and weekly progress</span>
+    </div>
+  </div>
+</div>
+
+<!-- RIGHT PANEL -->
+<div class="right-panel">
+  <div class="form-header">
+    <h1>Create account</h1>
+    <p>Already have an account? <a href="{{ url_for('login') }}">Sign in</a></p>
+  </div>
+
+  <!-- Flash messages -->
+  <div class="flash-container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="flash flash-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+  </div>
+
+  <form method="POST" action="{{ url_for('register') }}" novalidate>
+
+    <!-- Name (full width) -->
+    <div class="form-group">
+      <label for="name">Full Name</label>
+      <div class="input-wrap">
+        <span class="input-icon">👤</span>
+        <input type="text" id="name" name="name"
+               placeholder="Your full name" required
+               value="{{ request.form.get('name', '') }}"/>
+      </div>
+    </div>
+
+    <!-- Email (full width) -->
+    <div class="form-group">
+      <label for="email">Email Address</label>
+      <div class="input-wrap">
+        <span class="input-icon">✉️</span>
+        <input type="email" id="email" name="email"
+               placeholder="you@example.com" required
+               value="{{ request.form.get('email', '') }}"/>
+      </div>
+    </div>
+
+    <!-- Password row -->
+    <div class="form-row">
+      <div class="form-group">
+        <label for="password">Password</label>
+        <div class="input-wrap">
+          <span class="input-icon">🔒</span>
+          <input type="password" id="password" name="password"
+                 placeholder="Min. 6 characters" required
+                 oninput="checkStrength(this.value)"/>
+          <button type="button" class="toggle-pw" onclick="togglePw('password')">👁️</button>
+        </div>
+        <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
+        <div class="strength-text" id="strengthText">Enter a password</div>
+      </div>
+
+      <div class="form-group">
+        <label for="confirm_password">Confirm Password</label>
+        <div class="input-wrap">
+          <span class="input-icon">🔒</span>
+          <input type="password" id="confirm_password" name="confirm_password"
+                 placeholder="Repeat password" required/>
+          <button type="button" class="toggle-pw" onclick="togglePw('confirm_password')">👁️</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Role selector -->
+    <span class="role-section-label">I am a</span>
+    <div class="role-selector">
+      <div>
+        <input type="radio" class="role-option" name="role" id="role-student"
+               value="student" {% if request.form.get('role','student') == 'student' %}checked{% endif %}>
+        <label class="role-label" for="role-student">
+          <span class="role-icon">🎓</span> Student
+        </label>
+      </div>
+      <div>
+        <input type="radio" class="role-option" name="role" id="role-admin"
+               value="admin" {% if request.form.get('role') == 'admin' %}checked{% endif %}>
+        <label class="role-label" for="role-admin">
+          <span class="role-icon">🛡️</span> Admin
+        </label>
+      </div>
+    </div>
+
+    <button type="submit" class="btn-submit">Create Account →</button>
+
+    <p class="terms">
+      By registering, you agree to use this system responsibly for academic purposes only.
+    </p>
+
+  </form>
+
+  <div class="login-link">
+    Already registered? <a href="{{ url_for('login') }}">Sign in here</a>
+  </div>
+</div>
+
+<script>
+  function togglePw(id) {
+    const el = document.getElementById(id);
+    el.type = el.type === 'password' ? 'text' : 'password';
+  }
+
+  function checkStrength(pw) {
+    const fill = document.getElementById('strengthFill');
+    const text = document.getElementById('strengthText');
+    let score = 0;
+    if (pw.length >= 6) score++;
+    if (pw.length >= 10) score++;
+    if (/[A-Z]/.test(pw)) score++;
+    if (/[0-9]/.test(pw)) score++;
+    if (/[^A-Za-z0-9]/.test(pw)) score++;
+
+    const levels = [
+      { pct: '0%',   color: '#e8e0d4', label: 'Enter a password' },
+      { pct: '25%',  color: '#ef4444', label: 'Weak' },
+      { pct: '50%',  color: '#f97316', label: 'Fair' },
+      { pct: '75%',  color: '#eab308', label: 'Good' },
+      { pct: '90%',  color: '#22c55e', label: 'Strong' },
+      { pct: '100%', color: '#16a34a', label: 'Very Strong' },
+    ];
+    const l = levels[Math.min(score, 5)];
+    fill.style.width = l.pct;
+    fill.style.background = l.color;
+    text.textContent = l.label;
+    text.style.color = l.color;
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Timetables – Smart Study Planner</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --ink: #0f1623; --paper: #f5f0e8; --accent: #2d6a4f;
+      --gold: #e9c46a; --muted: #6b7280; --white: #ffffff;
+      --danger: #dc2626; --success: #16a34a; --sidebar-w: 220px; --border: #e8e0d4;
+    }
+    html, body { height: 100%; overflow-x: hidden; }
+    body { font-family: 'DM Sans', sans-serif; background: #f0ece2; color: var(--ink); display: flex; min-height: 100vh; }
+
+    /* ══ SIDEBAR ══ */
+    .sidebar { width: var(--sidebar-w); background: var(--ink); display: flex; flex-direction: column; padding: 1.8rem 1rem; position: fixed; top: 0; left: 0; bottom: 0; z-index: 50; overflow-y: auto; flex-shrink: 0; }
+    .sidebar-brand { font-family: 'Playfair Display', serif; font-size: 1.25rem; color: var(--white); text-decoration: none; margin-bottom: 2rem; display: block; }
+    .sidebar-brand span { color: var(--gold); }
+    .nav-section-label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 1.5px; color: rgba(255,255,255,0.3); margin-bottom: 0.5rem; padding-left: 0.5rem; }
+    .sidebar-nav { list-style: none; margin-bottom: 1.2rem; }
+    .sidebar-nav li { margin-bottom: 0.2rem; }
+    .nav-link { display: flex; align-items: center; gap: 0.65rem; padding: 0.6rem 0.75rem; border-radius: 8px; color: rgba(255,255,255,0.6); text-decoration: none; font-size: 0.86rem; transition: all 0.2s; white-space: nowrap; overflow: hidden; }
+    .nav-link:hover, .nav-link.active { background: rgba(255,255,255,0.1); color: var(--white); }
+    .nav-link.active { background: var(--accent); }
+    .nav-icon { font-size: 1rem; width: 1.3rem; text-align: center; flex-shrink: 0; }
+    .sidebar-bottom { margin-top: auto; }
+    .user-card { display: flex; align-items: center; gap: 0.65rem; padding: 0.75rem; background: rgba(255,255,255,0.07); border-radius: 10px; margin-bottom: 0.5rem; }
+    .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-family: 'Playfair Display', serif; font-size: 0.9rem; color: var(--white); flex-shrink: 0; }
+    .user-name { font-size: 0.82rem; font-weight: 500; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-role { font-size: 0.7rem; color: rgba(255,255,255,0.4); }
+    .logout-link { display: flex; align-items: center; gap: 0.6rem; color: rgba(255,255,255,0.4); text-decoration: none; font-size: 0.8rem; padding: 0.4rem 0.75rem; border-radius: 6px; transition: color 0.2s; }
+    .logout-link:hover { color: #ef4444; background: rgba(239,68,68,0.1); }
+
+    /* ══ MAIN ══ */
+    .main { margin-left: var(--sidebar-w); flex: 1; min-width: 0; padding: 2rem 2rem 3rem; max-width: 100%; overflow-x: hidden; }
+    .page-title { font-family: 'Playfair Display', serif; font-size: 1.7rem; }
+    .page-sub { font-size: 0.86rem; color: var(--muted); margin-top: 0.2rem; margin-bottom: 1.8rem; }
+
+    /* ══ BUTTONS ══ */
+    .btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.6rem 1.2rem; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.86rem; font-weight: 500; cursor: pointer; border: none; transition: all 0.2s; text-decoration: none; white-space: nowrap; }
+    .btn-solid   { background: var(--accent); color: var(--white); }
+    .btn-solid:hover { background: #1f4d38; }
+    .btn-outline { background: transparent; border: 1.5px solid var(--border); color: var(--ink); }
+    .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-danger  { background: #fee2e2; color: var(--danger); border: none; }
+    .btn-danger:hover { background: #fecaca; }
+    .btn-sm  { padding: 0.32rem 0.7rem; font-size: 0.76rem; }
+
+    /* ══ LOADING ══ */
+    .loading-wrap { display:flex; flex-direction:column; align-items:center; padding:4rem; gap:1rem; }
+    .spinner { width:42px; height:42px; border:4px solid rgba(45,106,79,0.15); border-top-color:var(--accent); border-radius:50%; animation:spin .85s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ══ EMPTY STATE ══ */
+    .empty-state { text-align: center; padding: 4rem 2rem; background: var(--white); border-radius: 16px; border: 1px solid var(--border); }
+    .empty-icon { font-size: 3rem; margin-bottom: 1rem; }
+    .empty-state h2 { font-family: 'Playfair Display', serif; font-size: 1.4rem; margin-bottom: 0.6rem; }
+    .empty-state p { color: var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem; }
+
+    /* ══ TIMETABLE CARDS GRID ══ */
+    .tt-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.2rem;
+      margin-bottom: 2rem;
+    }
+    .tt-card {
+      background: var(--white);
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s;
+    }
+    .tt-card:hover { transform: translateY(-4px); box-shadow: 0 8px 28px rgba(0,0,0,0.1); border-color: var(--accent); }
+    .tt-card.active { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(45,106,79,0.15); }
+    .tt-card-top {
+      background: linear-gradient(135deg, var(--accent) 0%, #1f4d38 100%);
+      padding: 1.4rem 1.4rem 1rem;
+      position: relative;
+    }
+    .tt-card-icon { font-size: 1.8rem; margin-bottom: 0.5rem; }
+    .tt-card-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1rem;
+      color: var(--white);
+      line-height: 1.3;
+      word-break: break-word;
+    }
+    .tt-card-date {
+      font-size: 0.72rem;
+      color: rgba(255,255,255,0.6);
+      margin-top: 0.3rem;
+    }
+    .tt-card-body { padding: 1rem 1.2rem; }
+    .tt-meta-row { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.8rem; }
+    .tt-chip {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      background: rgba(45,106,79,0.08); color: var(--accent);
+      border-radius: 20px; padding: 0.2rem 0.6rem; font-size: 0.72rem; font-weight: 500;
+    }
+    .tt-card-footer {
+      display: flex; justify-content: space-between; align-items: center;
+      padding-top: 0.8rem;
+      border-top: 1px solid #f0ece4;
+    }
+    .tt-view-btn {
+      font-size: 0.78rem; color: var(--accent); font-weight: 500;
+    }
+    .tt-del-btn {
+      background: none; border: none; cursor: pointer;
+      font-size: 0.78rem; color: #ef4444; padding: 0.2rem 0.4rem;
+      border-radius: 5px; transition: background 0.15s;
+    }
+    .tt-del-btn:hover { background: #fee2e2; }
+
+    /* ══ EXPANDED TIMETABLE VIEW ══ */
+    #ttDetail { display: none; }
+    .detail-hdr {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      margin-bottom: 1.2rem; flex-wrap: wrap; gap: 1rem;
+      background: var(--white); border-radius: 14px; border: 1px solid var(--border);
+      padding: 1.4rem 1.6rem;
+    }
+    .detail-hdr h2 { font-family: 'Playfair Display', serif; font-size: 1.3rem; }
+    .detail-hdr p  { font-size: 0.8rem; color: var(--muted); margin-top: 0.2rem; }
+    .detail-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+
+    /* Summary chips */
+    .sum-strip { display: flex; gap: 0.75rem; margin-bottom: 1.4rem; flex-wrap: wrap; }
+    .s-chip { display: flex; align-items: center; gap: 0.55rem; background: var(--white); border: 1px solid var(--border); border-radius: 10px; padding: 0.65rem 0.9rem; flex: 1; min-width: 100px; }
+    .s-chip .ci { font-size: 1.1rem; }
+    .s-chip .cv { font-weight: 700; font-size: 0.95rem; display: block; }
+    .s-chip .cl { font-size: 0.68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; display: block; }
+
+    /* Day cards */
+    .days-wrap { display: flex; flex-direction: column; gap: 0.9rem; }
+    .day-card { background: var(--white); border-radius: 14px; border: 1px solid var(--border); overflow: hidden; transition: box-shadow 0.2s; }
+    .day-card:hover { box-shadow: 0 4px 18px rgba(0,0,0,0.07); }
+    .day-card.is-today .dhdr { background: var(--accent); }
+    .day-card.is-today .dnum,.day-card.is-today .dname,.day-card.is-today .ddt { color: var(--white); }
+    .day-card.is-today .dbadge { background: rgba(255,255,255,0.2); color: var(--white); }
+    .day-card.is-rest  .dhdr { background: #f5f0e8; }
+    .day-card.collapsed .dbdy { display: none; }
+    .day-card.collapsed .chev { transform: rotate(-90deg); }
+
+    .dhdr { display: flex; align-items: center; gap: 0.9rem; padding: 0.85rem 1.2rem; background: #fafaf7; border-bottom: 1px solid var(--border); cursor: pointer; user-select: none; flex-wrap: wrap; }
+    .dnum  { font-family: 'Playfair Display', serif; font-size: 1.7rem; line-height: 1; color: var(--accent); min-width: 2rem; text-align: center; }
+    .dname { font-weight: 600; font-size: 0.87rem; }
+    .ddt   { font-size: 0.73rem; color: var(--muted); }
+    .dbadge { margin-left: auto; background: rgba(45,106,79,0.1); color: var(--accent); border-radius: 20px; padding: 0.2rem 0.7rem; font-size: 0.72rem; font-weight: 600; white-space: nowrap; }
+    .chev  { color: var(--muted); font-size: 0.72rem; margin-left: 0.3rem; transition: transform 0.22s; }
+
+    .dbdy { padding: 1rem 1.2rem; }
+    .sess-list { display: flex; flex-direction: column; gap: 0.65rem; }
+    .sb { display: flex; gap: 0.85rem; align-items: flex-start; padding: 0.85rem 0.95rem; border-radius: 10px; border-left: 4px solid transparent; background: #fafaf7; }
+    .st { font-size: 0.72rem; color: var(--muted); min-width: 75px; padding-top: 0.1rem; line-height: 1.5; flex-shrink: 0; }
+    .sc { flex: 1; min-width: 0; }
+    .sn { font-weight: 600; font-size: 0.86rem; margin-bottom: 0.3rem; }
+    .sl { font-size: 0.79rem; color: #444; line-height: 1.65; list-style: disc; padding-left: 1rem; }
+    .sl li { margin-bottom: 0.1rem; }
+    .snote { font-size: 0.74rem; color: var(--muted); margin-top: 0.3rem; }
+    .sdur  { display: inline-block; font-size: 0.7rem; font-weight: 600; padding: 0.16rem 0.5rem; border-radius: 20px; margin-top: 0.4rem; }
+
+    .c0{border-color:#6366f1}.c0 .sn{color:#4f46e5}.c0 .sdur{background:#ede9fe;color:#4f46e5}
+    .c1{border-color:#f59e0b}.c1 .sn{color:#b45309}.c1 .sdur{background:#fef3c7;color:#b45309}
+    .c2{border-color:#10b981}.c2 .sn{color:#047857}.c2 .sdur{background:#d1fae5;color:#047857}
+    .c3{border-color:#ef4444}.c3 .sn{color:#b91c1c}.c3 .sdur{background:#fee2e2;color:#b91c1c}
+    .c4{border-color:#8b5cf6}.c4 .sn{color:#7c3aed}.c4 .sdur{background:#ede9fe;color:#7c3aed}
+    .c5{border-color:#06b6d4}.c5 .sn{color:#0e7490}.c5 .sdur{background:#cffafe;color:#0e7490}
+    .c6{border-color:#ec4899}.c6 .sn{color:#be185d}.c6 .sdur{background:#fce7f3;color:#be185d}
+    .c7{border-color:#14b8a6}.c7 .sn{color:#0f766e}.c7 .sdur{background:#ccfbf1;color:#0f766e}
+
+    .rest-msg { text-align:center; padding:1.4rem; color:var(--muted); }
+    .break-block { display:flex; align-items:center; gap:0.6rem; padding:0.45rem 0.95rem; background:#fef9ec; border-radius:8px; font-size:0.78rem; color:#92400e; }
+
+    @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+    .fi { animation: fadeUp .4s ease both; }
+
+    @media (max-width: 768px) { .sidebar { display:none; } .main { margin-left:0; padding:1.2rem; } }
+    @media print {
+      .sidebar, .detail-actions { display:none!important }
+      .main { margin-left:0 }
+      .day-card.collapsed .dbdy { display:block!important }
+      .day-card { break-inside:avoid; margin-bottom:1rem }
+    }
+  </style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <a href="{{ url_for('index') }}" class="sidebar-brand">Smart<span>Study</span></a>
+  <p class="nav-section-label">Main Menu</p>
+  <ul class="sidebar-nav">
+    <li><a href="{{ url_for('dashboard') }}"      class="nav-link"><span class="nav-icon">🏠</span> Dashboard</a></li>
+    <li><a href="{{ url_for('study_plans') }}"    class="nav-link"><span class="nav-icon">📅</span> Study Plans</a></li>
+    <li><a href="{{ url_for('my_timetable') }}"   class="nav-link active"><span class="nav-icon">🗓️</span> My Timetable</a></li>
+    <li><a href="{{ url_for('pdf_notes') }}"      class="nav-link"><span class="nav-icon">📄</span> PDF Notes</a></li>
+    <li><a href="{{ url_for('chatbot') }}"        class="nav-link"><span class="nav-icon">🤖</span> PDF Chatbot</a></li>
+  </ul>
+  {% if session.get('user_role') == 'admin' %}
+  <p class="nav-section-label">Admin</p>
+  <ul class="sidebar-nav">
+    <li><a href="{{ url_for('admin_panel') }}" class="nav-link"><span class="nav-icon">🛡️</span> Admin Panel</a></li>
+  </ul>
+  {% endif %}
+  <div class="sidebar-bottom">
+    <div class="user-card">
+      <div class="user-avatar">{{ session.get('user_name','U')[0].upper() }}</div>
+      <div>
+        <div class="user-name">{{ session.get('user_name','User') }}</div>
+        <div class="user-role">{{ session.get('user_role','student') }}</div>
+      </div>
+    </div>
+    <a href="{{ url_for('logout') }}" class="logout-link">⬅️ Logout</a>
+  </div>
+</aside>
+
+<main class="main">
+
+  <!-- Page header -->
+  <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.3rem; flex-wrap:wrap; gap:1rem;">
+    <div>
+      <h1 class="page-title">My Timetables</h1>
+      <p class="page-sub">Click any timetable to view it in full.</p>
+    </div>
+    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-top:0.3rem;">
+      <a href="{{ url_for('study_plans') }}" class="btn btn-solid">+ Generate New</a>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div id="loadingWrap" class="loading-wrap">
+    <div class="spinner"></div>
+    <span style="color:var(--muted);font-size:.88rem;">Loading your timetables…</span>
+  </div>
+
+  <!-- Empty state -->
+  <div id="emptyState" class="empty-state" style="display:none">
+    <div class="empty-icon">🗓️</div>
+    <h2>No timetables saved yet</h2>
+    <p>Generate a timetable from your syllabus PDF and it'll appear here.</p>
+    <a href="{{ url_for('study_plans') }}" class="btn btn-solid">📅 Go to Study Plans</a>
+  </div>
+
+  <!-- Timetable cards grid -->
+  <div id="ttGrid" class="tt-grid" style="display:none"></div>
+
+  <!-- Expanded timetable detail -->
+  <div id="ttDetail" class="fi">
+    <div class="detail-hdr">
+      <div>
+        <h2 id="detailTitle">Study Timetable</h2>
+        <p id="detailSub"></p>
+      </div>
+      <div class="detail-actions">
+        <button class="btn btn-outline btn-sm" onclick="backToGrid()">← Back</button>
+        <button class="btn btn-outline btn-sm" onclick="toggleAll(true)">Expand All</button>
+        <button class="btn btn-outline btn-sm" onclick="toggleAll(false)">Collapse All</button>
+        <button class="btn btn-outline btn-sm" onclick="window.print()">🖨 Print</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteActive()">🗑 Delete</button>
+      </div>
+    </div>
+    <div class="sum-strip" id="sumStrip"></div>
+    <div class="days-wrap" id="daysWrap"></div>
+  </div>
+
+</main>
+
+<script>
+var allTimetables = [];
+var activeTTId    = null;
+
+function esc(s){ var d=document.createElement('div'); d.textContent=s||''; return d.innerHTML; }
+function chip(ic,v,l){ return '<div class="s-chip"><span class="ci">'+ic+'</span><div><span class="cv">'+v+'</span><span class="cl">'+l+'</span></div></div>'; }
+function fmt12(totalMins){ var h=Math.floor(totalMins/60)%24,m=totalMins%60,ap=h<12?'AM':'PM',h12=h%12||12; return h12+(m?':'+(m<10?'0':'')+m:'')+' '+ap; }
+function toggleDay(idx){ var c=document.querySelector('.day-card[data-idx="'+idx+'"]'); if(c) c.classList.toggle('collapsed'); }
+function toggleAll(o){ document.querySelectorAll('.day-card').forEach(function(c){ o?c.classList.remove('collapsed'):c.classList.add('collapsed'); }); }
+
+/* ── Build timetable cards grid ── */
+function renderGrid(timetables) {
+  var grid = document.getElementById('ttGrid');
+  grid.innerHTML = '';
+
+  timetables.forEach(function(entry) {
+    var plan = entry.timetable;
+    var studyDays = (plan.days||[]).filter(function(d){ return d.type==='study'; }).length;
+    var subjLabel = plan.numSubjects===1 ? 'modules' : 'subjects';
+    var subjCount = (plan.subjects||[]).length;
+
+    var card = document.createElement('div');
+    card.className = 'tt-card fi';
+    card.innerHTML =
+      '<div class="tt-card-top">'+
+        '<div class="tt-card-icon">🗓️</div>'+
+        '<div class="tt-card-title">'+esc(entry.title)+'</div>'+
+        '<div class="tt-card-date">Saved '+esc(entry.created_at)+'</div>'+
+      '</div>'+
+      '<div class="tt-card-body">'+
+        '<div class="tt-meta-row">'+
+          '<span class="tt-chip">📅 '+(plan.days||[]).length+' days</span>'+
+          '<span class="tt-chip">📚 '+studyDays+' study</span>'+
+          '<span class="tt-chip">⏱ '+(plan.totalHours||0)+'h</span>'+
+          '<span class="tt-chip">🎯 '+subjCount+' '+subjLabel+'</span>'+
+        '</div>'+
+        '<div class="tt-card-footer">'+
+          '<span class="tt-view-btn">View timetable →</span>'+
+          '<button class="tt-del-btn" data-id="'+entry.id+'">🗑 Delete</button>'+
+        '</div>'+
+      '</div>';
+
+    // Click card body to open
+    card.addEventListener('click', function(e) {
+      if(e.target.classList.contains('tt-del-btn') || e.target.closest('.tt-del-btn')) return;
+      openTimetable(entry);
+    });
+
+    // Delete button
+    card.querySelector('.tt-del-btn').addEventListener('click', function(e) {
+      e.stopPropagation();
+      deleteTimetable(entry.id, card);
+    });
+
+    grid.appendChild(card);
+  });
+}
+
+/* ── Open a timetable into detail view ── */
+function openTimetable(entry) {
+  activeTTId = entry.id;
+  var plan = entry.timetable;
+
+  // Highlight active card
+  document.querySelectorAll('.tt-card').forEach(function(c){ c.classList.remove('active'); });
+
+  var dw = document.getElementById('daysWrap');
+  var ss = document.getElementById('sumStrip');
+  dw.innerHTML = ''; ss.innerHTML = '';
+
+  var rawTitle = entry.title || 'Study Timetable';
+  document.getElementById('detailTitle').textContent = rawTitle.length > 70 ? rawTitle.slice(0,67)+'…' : rawTitle;
+  document.getElementById('detailSub').textContent =
+    (plan.startDate||'')+' to '+(plan.examDate||'')+
+    '  ·  '+(plan.totalStudyDays||0)+' study days  ·  '+(plan.totalHours||0)+'h total';
+
+  var colMap = {};
+  (plan.subjects||[]).forEach(function(s,i){ colMap[s]=i%8; });
+  var today     = new Date().toISOString().split('T')[0];
+  var sN        = (plan.days||[]).filter(function(d){ return d.type==='study'; }).length;
+  var rN        = (plan.days||[]).filter(function(d){ return d.type==='rest';  }).length;
+  var subjCount = (plan.subjects||[]).length;
+  var subjLabel = plan.numSubjects===1 ? 'Modules' : 'Subjects';
+
+  ss.innerHTML =
+    chip('📅',(plan.days||[]).length,'Total Days')+
+    chip('📚',sN,'Study Days')+
+    chip('⏱',(plan.totalHours||0)+'h','Total Hours')+
+    chip('😴',rN,'Rest Days')+
+    chip('🎯',subjCount,subjLabel);
+
+  (plan.days||[]).forEach(function(day,idx){
+    var iT=day.date===today, iR=day.type==='rest';
+    var dt   = new Date(day.date+'T00:00:00');
+    var diff = (dt - new Date(today+'T00:00:00')) / 86400000;
+    var mon  = dt.toLocaleString('default',{month:'short'});
+    var card = document.createElement('div');
+    card.className = 'day-card fi'+(iT?' is-today':'')+(iR?' is-rest':'');
+    card.dataset.idx = idx;
+    if(diff < 0 || diff > 2) card.classList.add('collapsed');
+
+    var hdr = document.createElement('div');
+    hdr.className = 'dhdr';
+    hdr.onclick = function(){ toggleDay(idx); };
+    hdr.innerHTML =
+      '<div class="dnum">'+dt.getDate()+'</div>'+
+      '<div><div class="dname">'+(day.dayName||'')+(iT?' – Today':'')+'</div>'+
+      '<div class="ddt">'+mon+' '+dt.getDate()+', '+dt.getFullYear()+'</div></div>'+
+      (!iR?'<div class="dbadge">'+(day.totalHours||0)+'h</div>':'')+
+      (iR?'<div class="dbadge" style="background:#e8e0d4;color:var(--muted)">Rest</div>':'')+
+      '<span class="chev">▾</span>';
+    card.appendChild(hdr);
+
+    var bdy = document.createElement('div');
+    bdy.className = 'dbdy';
+
+    if(iR){
+      bdy.innerHTML = '<div class="rest-msg">😴 Rest day — relax and recharge.</div>';
+    } else {
+      var sess = day.sessions||[];
+      var sl   = document.createElement('div'); sl.className='sess-list';
+      var startParts = (plan.startTime||'08:00').split(':');
+      var cursor     = parseInt(startParts[0])*60 + parseInt(startParts[1]||0);
+      var breakMins  = plan.breakMinutes||0;
+
+      sess.forEach(function(s,si){
+        var durMins = (s.durationHours||1)*60;
+        var ci = colMap[s.subject]!==undefined ? colMap[s.subject] : si%8;
+        var endMin = cursor + durMins;
+        var timeStr = fmt12(cursor)+'–'+fmt12(endMin);
+
+        var sb = document.createElement('div');
+        sb.className = 'sb c'+ci;
+        var topicsHtml = (s.topics||[]).map(function(t){ return '<li>'+esc(t)+'</li>'; }).join('');
+        sb.innerHTML =
+          '<div class="st">'+timeStr+'</div>'+
+          '<div class="sc">'+
+            '<div class="sn">'+esc(s.subject)+'</div>'+
+            (topicsHtml?'<ul class="sl">'+topicsHtml+'</ul>':'')+
+            (s.note?'<div class="snote">💡 '+esc(s.note)+'</div>':'')+
+            '<span class="sdur">'+s.durationHours+'h</span>'+
+          '</div>';
+        sl.appendChild(sb);
+
+        cursor = endMin;
+        if(breakMins && si < sess.length-1){
+          var brk = document.createElement('div');
+          brk.className = 'break-block';
+          brk.innerHTML = '<span style="font-size:.9rem">☕</span><span style="flex:1">Break</span>'+
+            '<small style="color:var(--muted);font-size:.72rem">'+fmt12(cursor)+' – '+fmt12(cursor+parseInt(breakMins))+'</small>'+
+            '<span style="background:#fef3c7;color:#b45309;border-radius:20px;padding:.15rem .5rem;font-size:.7rem;font-weight:600">'+breakMins+'m</span>';
+          sl.appendChild(brk);
+          cursor += parseInt(breakMins);
+        }
+      });
+      bdy.appendChild(sl);
+    }
+    card.appendChild(bdy);
+    dw.appendChild(card);
+  });
+
+  // Show detail, hide grid
+  document.getElementById('ttGrid').style.display   = 'none';
+  document.getElementById('ttDetail').style.display = 'block';
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+/* ── Back to grid ── */
+function backToGrid() {
+  activeTTId = null;
+  document.getElementById('ttDetail').style.display = 'none';
+  document.getElementById('ttGrid').style.display   = 'grid';
+}
+
+/* ── Delete a timetable ── */
+async function deleteTimetable(id, cardEl) {
+  if(!confirm('Delete this timetable?')) return;
+  var res = await fetch('/study-plans/delete-timetable', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({id: id})
+  });
+  if(res.ok){
+    allTimetables = allTimetables.filter(function(t){ return t.id !== id; });
+    if(cardEl) cardEl.remove();
+    if(allTimetables.length === 0){
+      document.getElementById('ttGrid').style.display   = 'none';
+      document.getElementById('ttDetail').style.display = 'none';
+      document.getElementById('emptyState').style.display = 'block';
+    }
+  }
+}
+
+/* ── Delete active timetable from detail view ── */
+function deleteActive(){
+  if(!activeTTId) return;
+  var entry = allTimetables.find(function(t){ return t.id === activeTTId; });
+  if(!entry) return;
+  deleteTimetable(activeTTId, null).then(function(){
+    backToGrid();
+    renderGrid(allTimetables);
+  });
+}
+
+/* ── Load on page open ── */
+window.addEventListener('DOMContentLoaded', async function(){
+  try {
+    var res  = await fetch('/study-plans/load-timetable');
+    var data = await res.json();
+    document.getElementById('loadingWrap').style.display = 'none';
+
+    if(data.timetables && data.timetables.length > 0){
+      allTimetables = data.timetables;
+      renderGrid(allTimetables);
+      document.getElementById('ttGrid').style.display = 'grid';
+    } else {
+      document.getElementById('emptyState').style.display = 'block';
+    }
+  } catch(e){
+    document.getElementById('loadingWrap').style.display = 'none';
+    document.getElementById('emptyState').style.display  = 'block';
+  }
+});
+</script>
+</body>
+</html>

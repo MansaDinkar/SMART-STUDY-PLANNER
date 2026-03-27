@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard – Smart Study Planner</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink:    #0f1623;
+      --paper:  #f5f0e8;
+      --accent: #2d6a4f;
+      --gold:   #e9c46a;
+      --muted:  #6b7280;
+      --white:  #ffffff;
+      --danger: #dc2626;
+      --success:#16a34a;
+      --sidebar-w: 240px;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: #f0ece2;
+      color: var(--ink);
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ══ SIDEBAR ══ */
+    .sidebar {
+      width: var(--sidebar-w);
+      background: var(--ink);
+      display: flex;
+      flex-direction: column;
+      padding: 2rem 1.2rem;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 50;
+    }
+    .sidebar-brand {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.3rem;
+      color: var(--white);
+      text-decoration: none;
+      margin-bottom: 2.5rem;
+      display: block;
+    }
+    .sidebar-brand span { color: var(--gold); }
+    .nav-section-label {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: rgba(255,255,255,0.3);
+      margin-bottom: 0.6rem;
+      padding-left: 0.6rem;
+    }
+    .sidebar-nav { list-style: none; margin-bottom: 1.5rem; }
+    .sidebar-nav li { margin-bottom: 0.25rem; }
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.65rem 0.8rem;
+      border-radius: 8px;
+      color: rgba(255,255,255,0.6);
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+    .nav-link:hover, .nav-link.active { background: rgba(255,255,255,0.1); color: var(--white); }
+    .nav-link.active { background: var(--accent); }
+    .nav-icon { font-size: 1.1rem; width: 1.4rem; text-align: center; }
+    .sidebar-bottom { margin-top: auto; }
+    .user-card {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.8rem;
+      background: rgba(255,255,255,0.07);
+      border-radius: 10px;
+      margin-bottom: 0.6rem;
+    }
+    .user-avatar {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Playfair Display', serif;
+      font-size: 1rem;
+      color: var(--white);
+      flex-shrink: 0;
+    }
+    .user-info { overflow: hidden; }
+    .user-name { font-size: 0.85rem; font-weight: 500; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-role { font-size: 0.72rem; color: rgba(255,255,255,0.4); text-transform: capitalize; }
+    .logout-link {
+      display: flex; align-items: center; gap: 0.6rem;
+      color: rgba(255,255,255,0.4);
+      text-decoration: none;
+      font-size: 0.82rem;
+      padding: 0.4rem 0.8rem;
+      border-radius: 6px;
+      transition: color 0.2s, background 0.2s;
+    }
+    .logout-link:hover { color: #ef4444; background: rgba(239,68,68,0.1); }
+
+    /* ══ MAIN ══ */
+    .main {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      padding: 2.5rem 2.5rem 3rem;
+      animation: fadeUp 0.5s ease both;
+    }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 2rem;
+    }
+    .page-title { font-family: 'Playfair Display', serif; font-size: 1.8rem; color: var(--ink); }
+    .page-sub { font-size: 0.88rem; color: var(--muted); margin-top: 0.2rem; }
+    .topbar-actions { display: flex; gap: 0.75rem; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.6rem 1.2rem;
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.88rem; font-weight: 500;
+      text-decoration: none; cursor: pointer; border: none;
+      transition: all 0.2s;
+    }
+    .btn-solid { background: var(--accent); color: var(--white); }
+    .btn-solid:hover { background: #1f4d38; }
+    .btn-outline { border: 1.5px solid #ccc4b8; color: var(--ink); background: var(--white); }
+    .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-sm { padding: 0.28rem 0.6rem; font-size: 0.72rem; border-radius: 5px; }
+    .btn-warn { background: rgba(245,158,11,0.12); color: #b45309; border: 1px solid rgba(245,158,11,0.3); }
+    .btn-warn:hover { background: rgba(245,158,11,0.22); }
+    .btn-undo { background: rgba(59,130,246,0.1); color: #1d4ed8; border: 1px solid rgba(59,130,246,0.25); }
+    .btn-undo:hover { background: rgba(59,130,246,0.2); }
+
+    /* Flash */
+    .flash-container { margin-bottom: 1.5rem; }
+    .flash { padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.88rem; font-weight: 500; margin-bottom: 0.5rem; }
+    .flash-danger  { background: #fee2e2; color: #991b1b; border-left: 3px solid var(--danger); }
+    .flash-success { background: #d1fae5; color: #065f46; border-left: 3px solid var(--success); }
+    .flash-info    { background: #dbeafe; color: #1e40af; border-left: 3px solid #3b82f6; }
+    .flash-warning { background: #fef3c7; color: #92400e; border-left: 3px solid var(--gold); }
+
+    /* ── STAT CARDS ── */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.2rem;
+      margin-bottom: 1.5rem;
+    }
+    .stat-card {
+      background: var(--white);
+      border-radius: 14px;
+      padding: 1.4rem 1.5rem;
+      border: 1px solid #e8e0d4;
+      transition: transform 0.2s;
+    }
+    .stat-card:hover { transform: translateY(-3px); }
+    .stat-card-top {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 0.8rem;
+    }
+    .stat-label-sm { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); }
+    .stat-icon-badge {
+      width: 36px; height: 36px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center; font-size: 1.1rem;
+    }
+    .badge-green  { background: rgba(45,106,79,0.12); }
+    .badge-gold   { background: rgba(233,196,106,0.2); }
+    .badge-blue   { background: rgba(59,130,246,0.12); }
+    .badge-red    { background: rgba(239,68,68,0.1); }
+    .badge-purple { background: rgba(139,92,246,0.1); }
+    .stat-num-big { font-size: 2rem; font-weight: 600; color: var(--ink); letter-spacing: -1px; }
+    .stat-change { font-size: 0.78rem; color: var(--muted); margin-top: 0.2rem; }
+    .stat-change.up { color: var(--success); }
+
+    /* ── PROGRESS BARS ROW ── */
+    .progress-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.2rem;
+      margin-bottom: 1.5rem;
+    }
+    .progress-card {
+      background: var(--white);
+      border-radius: 14px;
+      border: 1px solid #e8e0d4;
+      padding: 1.2rem 1.5rem;
+    }
+    .progress-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.6rem;
+    }
+    .progress-title { font-size: 0.85rem; font-weight: 500; color: var(--ink); }
+    .progress-pct   { font-size: 0.85rem; font-weight: 600; color: var(--accent); }
+    .progress-track {
+      height: 10px;
+      background: #e8e0d4;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      border-radius: 10px;
+      background: var(--accent);
+      transition: width 0.8s ease;
+    }
+    .progress-fill.gold { background: var(--gold); }
+    .progress-sub { font-size: 0.76rem; color: var(--muted); margin-top: 0.4rem; }
+
+    /* ── CONTENT GRID ── */
+    .content-grid {
+      display: grid;
+      grid-template-columns: 1.6fr 1fr;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    /* ── SECTION CARD ── */
+    .section-card {
+      background: var(--white);
+      border-radius: 14px;
+      border: 1px solid #e8e0d4;
+      overflow: hidden;
+    }
+    .section-head {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 1.3rem 1.5rem;
+      border-bottom: 1px solid #f0ece4;
+    }
+    .section-head h2 { font-family: 'Playfair Display', serif; font-size: 1.1rem; }
+    .see-all { font-size: 0.8rem; color: var(--accent); text-decoration: none; font-weight: 500; }
+    .see-all:hover { text-decoration: underline; }
+
+    /* Plan table */
+    .plan-table { width: 100%; border-collapse: collapse; }
+    .plan-table th {
+      text-align: left; font-size: 0.72rem; text-transform: uppercase;
+      letter-spacing: 0.8px; color: var(--muted);
+      padding: 0.6rem 1.2rem;
+      background: #faf7f2; border-bottom: 1px solid #f0ece4;
+    }
+    .plan-table td {
+      padding: 0.75rem 1.2rem; font-size: 0.86rem;
+      border-bottom: 1px solid #f7f3ed; vertical-align: middle;
+    }
+    .plan-table tr:last-child td { border-bottom: none; }
+    .plan-table tr:hover td { background: #faf7f2; }
+
+    .subject-pill {
+      display: inline-block; padding: 0.22rem 0.65rem;
+      border-radius: 20px; font-size: 0.76rem; font-weight: 500;
+    }
+    .pill-green  { background: rgba(45,106,79,0.1);   color: var(--accent); }
+    .pill-gold   { background: rgba(233,196,106,0.25); color: #92400e; }
+    .pill-blue   { background: rgba(59,130,246,0.1);  color: #1d4ed8; }
+    .pill-purple { background: rgba(139,92,246,0.1);  color: #6d28d9; }
+
+    .status-badge { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.76rem; font-weight: 500; }
+    .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+    .dot-green { background: var(--success); }
+    .dot-gold  { background: #f59e0b; }
+    .dot-gray  { background: #9ca3af; }
+    .dot-red   { background: var(--danger); }
+
+    .action-cell { display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap; }
+    .complete-btn {
+      background: none; border: 1.5px solid #ddd6c8;
+      border-radius: 6px; padding: 0.28rem 0.65rem;
+      font-size: 0.72rem; cursor: pointer; color: var(--muted);
+      transition: all 0.2s; font-family: 'DM Sans', sans-serif;
+    }
+    .complete-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .complete-btn.done { background: rgba(45,106,79,0.1); border-color: var(--accent); color: var(--accent); }
+
+    /* Empty state */
+    .empty-state { text-align: center; padding: 3rem 2rem; color: var(--muted); }
+    .empty-icon { font-size: 2.5rem; margin-bottom: 0.8rem; }
+    .empty-state h3 { font-family: 'Playfair Display', serif; font-size: 1.05rem; color: var(--ink); margin-bottom: 0.4rem; }
+    .empty-state p { font-size: 0.85rem; line-height: 1.6; }
+
+    /* ── RIGHT COLUMN ── */
+    .right-col { display: flex; flex-direction: column; gap: 1.5rem; }
+
+    /* Quick add */
+    .quick-add { padding: 1.2rem 1.5rem; }
+    .qa-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; margin-bottom: 0.7rem; }
+    .qa-input {
+      width: 100%; padding: 0.65rem 0.85rem;
+      border: 1.5px solid #ddd6c8; border-radius: 8px;
+      font-family: 'DM Sans', sans-serif; font-size: 0.85rem;
+      background: var(--white); color: var(--ink); outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .qa-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(45,106,79,0.1); }
+    .btn-full { width: 100%; justify-content: center; }
+
+    /* PDF list */
+    .pdf-list { padding: 0.5rem 0; }
+    .pdf-item {
+      display: flex; align-items: center; gap: 0.9rem;
+      padding: 0.8rem 1.5rem;
+      border-bottom: 1px solid #f7f3ed;
+      transition: background 0.15s;
+    }
+    .pdf-item:last-child { border-bottom: none; }
+    .pdf-item:hover { background: #faf7f2; }
+    .pdf-icon {
+      width: 36px; height: 36px; border-radius: 8px;
+      background: rgba(239,68,68,0.1);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; flex-shrink: 0;
+    }
+    .pdf-info { flex: 1; min-width: 0; }
+    .pdf-name { font-size: 0.85rem; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pdf-meta { font-size: 0.74rem; color: var(--muted); margin-top: 0.15rem; }
+
+    /* ══ TWO-COL BOTTOM ══ */
+
+    .cal-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 1.1rem 1.5rem;
+      border-bottom: 1px solid #f0ece4;
+    }
+    .cal-header h3 { font-family: 'Playfair Display', serif; font-size: 1rem; }
+    .cal-nav { background: none; border: none; cursor: pointer; font-size: 1rem; color: var(--muted); padding: 0.2rem 0.5rem; border-radius: 5px; }
+    .cal-nav:hover { background: #f0ece4; color: var(--ink); }
+    .cal-body { padding: 1rem 1.2rem 1.2rem; }
+    .cal-weekdays {
+      display: grid; grid-template-columns: repeat(7, 1fr);
+      text-align: center;
+      font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;
+      color: var(--muted); margin-bottom: 0.5rem;
+    }
+    .cal-days {
+      display: grid; grid-template-columns: repeat(7, 1fr);
+      gap: 3px;
+    }
+    .cal-day {
+      aspect-ratio: 1;
+      border-radius: 6px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      font-size: 0.78rem;
+      cursor: default;
+      position: relative;
+      transition: transform 0.15s;
+    }
+    .cal-day:hover { transform: scale(1.1); z-index: 5; }
+    .cal-day.cal-empty { background: transparent; }
+    .cal-day.cal-blank { background: transparent; }
+    .cal-day.cal-today { background: var(--accent) !important; color: var(--white) !important; font-weight: 600; }
+    .cal-day.cal-done    { background: rgba(45,106,79,0.15); color: var(--accent); font-weight: 500; }
+    .cal-day.cal-partial { background: rgba(116,184,154,0.2); color: #1f6b47; }
+    .cal-day.cal-missed  { background: rgba(248,113,113,0.15); color: #b91c1c; }
+    .cal-day.cal-pending { background: rgba(233,196,106,0.2); color: #92400e; }
+    .cal-day.cal-noplan  { background: transparent; color: var(--muted); }
+    .cal-dots { display: flex; gap: 2px; margin-top: 2px; }
+    .cal-dot  { width: 4px; height: 4px; border-radius: 50%; }
+
+
+
+    /* Tooltip */
+    [data-tip] { position: relative; }
+    [data-tip]:hover::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: 130%; left: 50%;
+      transform: translateX(-50%);
+      background: #111;
+      color: #fff;
+      font-size: 0.68rem;
+      padding: 0.3rem 0.55rem;
+      border-radius: 5px;
+      white-space: nowrap;
+      z-index: 99;
+      pointer-events: none;
+    }
+
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+
+    @media (max-width: 1200px) {
+      .stat-grid { grid-template-columns: repeat(2, 1fr); }
+
+    }
+    @media (max-width: 1000px) {
+      .content-grid { grid-template-columns: 1fr; }
+      .progress-row { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); }
+      .main { margin-left: 0; padding: 1.5rem; }
+      .heatmap-grid { gap: 2px; } .hm-cell { width: 10px; height: 10px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <a href="{{ url_for('index') }}" class="sidebar-brand">Smart<span>Study</span></a>
+  <p class="nav-section-label">Main Menu</p>
+  <ul class="sidebar-nav">
+    <li><a href="{{ url_for('dashboard') }}"    class="nav-link active"><span class="nav-icon">🏠</span> Dashboard</a></li>
+    <li><a href="{{ url_for('study_plans') }}"  class="nav-link"><span class="nav-icon">📅</span> Study Plans</a></li>
+    <li><a href="{{ url_for('pdf_notes') }}"    class="nav-link"><span class="nav-icon">📄</span> PDF Notes</a></li>
+    <li><a href="{{ url_for('chatbot') }}"      class="nav-link"><span class="nav-icon">🤖</span> PDF Chatbot</a></li>
+  </ul>
+  {% if session.get('user_role') == 'admin' %}
+  <p class="nav-section-label">Admin</p>
+  <ul class="sidebar-nav">
+    <li><a href="{{ url_for('admin_panel') }}" class="nav-link"><span class="nav-icon">🛡️</span> Admin Panel</a></li>
+  </ul>
+  {% endif %}
+  <div class="sidebar-bottom">
+    <div class="user-card">
+      <div class="user-avatar">{{ session.get('user_name','U')[0].upper() }}</div>
+      <div class="user-info">
+        <div class="user-name">{{ session.get('user_name','User') }}</div>
+        <div class="user-role">{{ session.get('user_role','student') }}</div>
+      </div>
+    </div>
+    <a href="{{ url_for('logout') }}" class="logout-link">⬅️ Logout</a>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+
+  <div class="topbar">
+    <div>
+      <h1 class="page-title">Dashboard</h1>
+      <p class="page-sub">
+        {% set today_str = now.strftime('%A, %B %d %Y') if now else 'Today' %}
+        {{ today_str }} — Welcome back, {{ session.get('user_name','Student').split()[0] }}!
+      </p>
+    </div>
+    <div class="topbar-actions">
+      <a href="{{ url_for('pdf_notes') }}"    class="btn btn-outline">📄 Upload PDF</a>
+      <a href="{{ url_for('study_plans') }}"  class="btn btn-solid">+ Add Plan</a>
+    </div>
+  </div>
+
+  <div class="flash-container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="flash flash-{{ category }}">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+  </div>
+
+  <!-- ── STAT CARDS ── -->
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-card-top">
+        <span class="stat-label-sm">Today's Progress</span>
+        <div class="stat-icon-badge badge-green">🎯</div>
+      </div>
+      <div class="stat-num-big">{{ stats.today_pct }}%</div>
+      <div class="stat-change">{{ stats.today_completed }}/{{ stats.today_total }} sessions done</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-top">
+        <span class="stat-label-sm">Study Streak</span>
+        <div class="stat-icon-badge badge-gold">🔥</div>
+      </div>
+      <div class="stat-num-big">{{ stats.streak }}</div>
+      <div class="stat-change {% if stats.streak > 0 %}up{% endif %}">
+        {% if stats.streak == 1 %}day in a row{% elif stats.streak > 1 %}days in a row{% else %}Start your streak today!{% endif %}
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-top">
+        <span class="stat-label-sm">Hours Studied</span>
+        <div class="stat-icon-badge badge-blue">⏱️</div>
+      </div>
+      <div class="stat-num-big">{{ stats.hours_studied }}h</div>
+      <div class="stat-change">of {{ stats.total_hours }}h planned</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-top">
+        <span class="stat-label-sm">Missed Sessions</span>
+        <div class="stat-icon-badge badge-red">⚠️</div>
+      </div>
+      <div class="stat-num-big">{{ stats.skipped }}</div>
+      <div class="stat-change">{{ stats.completed }} completed · {{ stats.pending }} upcoming</div>
+    </div>
+  </div>
+
+  <!-- ── PROGRESS BARS ── -->
+  <div class="progress-row">
+    <div class="progress-card">
+      <div class="progress-label-row">
+        <span class="progress-title">Today's Completion</span>
+        <span class="progress-pct">{{ stats.today_pct }}%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" style="width: {{ stats.today_pct }}%"></div>
+      </div>
+      <div class="progress-sub">{{ stats.today_completed }} of {{ stats.today_total }} sessions completed today</div>
+    </div>
+    <div class="progress-card">
+      {% set hrs_pct = ((stats.hours_studied / stats.total_hours * 100) | round | int) if stats.total_hours > 0 else 0 %}
+      <div class="progress-label-row">
+        <span class="progress-title">Hours Studied vs Planned</span>
+        <span class="progress-pct">{{ hrs_pct }}%</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill gold" style="width: {{ hrs_pct }}%"></div>
+      </div>
+      <div class="progress-sub">{{ stats.hours_studied }}h studied of {{ stats.total_hours }}h planned</div>
+    </div>
+  </div>
+
+  <!-- ── CONTENT GRID (plans + quick-add + PDFs) ── -->
+  <div class="content-grid">
+
+    <!-- Upcoming plans -->
+    <div class="section-card">
+      <div class="section-head">
+        <h2>Upcoming Study Plans</h2>
+        <a href="{{ url_for('study_plans') }}" class="see-all">See all →</a>
+      </div>
+      {% if plans %}
+        <table class="plan-table">
+          <thead>
+            <tr>
+              <th>Subject</th>
+              <th>Date</th>
+              <th>Hrs</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% set color_map = namespace(data={}) %}
+            {% set palette = ['pill-green','pill-gold','pill-blue','pill-purple'] %}
+            {% for plan in plans %}
+            {% if plan.subject not in color_map.data %}
+              {% set _ = color_map.data.update({plan.subject: palette[color_map.data|length % 4]}) %}
+            {% endif %}
+            {% set color = color_map.data[plan.subject] %}
+            <tr>
+              <td><span class="subject-pill {{ color }}" title="{{ plan.subject }}">{{ plan.subject }}</span></td>
+              <td>{{ plan.schedule_date.strftime('%b %d') }}</td>
+              <td>{{ plan.study_hours }}h</td>
+              <td>
+                {% if plan.completed %}
+                  <span class="status-badge"><span class="dot dot-green"></span> Done</span>
+                {% elif plan.skipped %}
+                  <span class="status-badge"><span class="dot dot-red"></span> Missed</span>
+                {% else %}
+                  <span class="status-badge"><span class="dot dot-gold"></span> Pending</span>
+                {% endif %}
+              </td>
+              <td>
+                <div class="action-cell">
+                  {% if plan.completed %}
+                    <button class="complete-btn done" disabled>✓ Done</button>
+                  {% elif plan.skipped %}
+                    <form method="POST" action="{{ url_for('unskip_plan', plan_id=plan.id) }}" style="display:inline;">
+                      <button type="submit" class="btn btn-sm btn-undo">↩ Restore</button>
+                    </form>
+                  {% else %}
+                    <form method="POST" action="{{ url_for('complete_plan', plan_id=plan.id) }}" style="display:inline;">
+                      <button type="submit" class="complete-btn">✓ Mark Done</button>
+                    </form>
+                    <form method="POST" action="{{ url_for('skip_and_redistribute', plan_id=plan.id) }}" style="display:inline;"
+                          onsubmit="return confirm('Skip this session? Its hours will be redistributed to future sessions of the same subject.');">
+                      <button type="submit" class="btn btn-sm btn-warn" title="Skip & redistribute hours to future sessions">✕ Skip</button>
+                    </form>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="empty-state">
+          <div class="empty-icon">📅</div>
+          <h3>No upcoming plans</h3>
+          <p>Add a study plan or generate one with AI from the Study Plans page.</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Right column -->
+    <div class="right-col">
+
+      <!-- Quick Add -->
+      <div class="section-card">
+        <div class="section-head"><h2>Quick Add Plan</h2></div>
+        <div class="quick-add">
+          <form method="POST" action="{{ url_for('add_plan') }}">
+            <div class="qa-row">
+              <input class="qa-input" type="text"   name="subject"      placeholder="Subject"    required/>
+              <input class="qa-input" type="number" name="study_hours"  placeholder="Hours" min="0.5" max="12" step="0.5" required/>
+            </div>
+            <input class="qa-input" type="date" name="schedule_date" style="margin-bottom:0.7rem;" required/>
+            <button type="submit" class="btn btn-solid btn-full">+ Add to Schedule</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Calendar -->
+      <div class="section-card" style="padding:0;overflow:hidden;">
+        <div class="cal-header" style="padding:0.85rem 1.2rem;">
+          <button class="cal-nav" onclick="calPrev()">‹</button>
+          <h3 id="calTitle" style="font-size:0.95rem;"></h3>
+          <button class="cal-nav" onclick="calNext()">›</button>
+        </div>
+        <div class="cal-body" style="padding:0.5rem 1rem 1rem;">
+          <div class="cal-weekdays" style="font-size:0.65rem;">
+            <div>Mon</div><div>Tue</div><div>Wed</div>
+            <div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
+          </div>
+          <div class="cal-days" id="calGrid"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SKIPPED SESSIONS ── -->
+  <div class="section-card" style="margin-bottom:1.5rem;">
+    <div class="section-head">
+      <h2>⚠️ Skipped Sessions</h2>
+      <span style="font-size:0.8rem;color:var(--muted);">{{ skipped_sessions|length }} skipped</span>
+    </div>
+    {% if skipped_sessions %}
+    <table class="plan-table">
+      <thead>
+        <tr>
+          <th>Subject</th>
+          <th>Date</th>
+          <th>Hrs</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% set skip_color_map = namespace(data={}) %}
+        {% set palette = ['pill-green','pill-gold','pill-blue','pill-purple'] %}
+        {% for plan in skipped_sessions %}
+        {% if plan.subject not in skip_color_map.data %}
+          {% set _ = skip_color_map.data.update({plan.subject: palette[skip_color_map.data|length % 4]}) %}
+        {% endif %}
+        {% set color = skip_color_map.data[plan.subject] %}
+        <tr>
+          <td><span class="subject-pill {{ color }}" title="{{ plan.subject }}">{{ plan.subject }}</span></td>
+          <td style="color:var(--danger);font-size:0.82rem;">{{ plan.schedule_date.strftime("%b %d, %Y") }}</td>
+          <td>{{ plan.study_hours }}h</td>
+          <td>
+            <div class="action-cell">
+              <form method="POST" action="{{ url_for('unskip_plan', plan_id=plan.id) }}" style="display:inline;">
+                <button type="submit" class="btn btn-sm btn-undo">↩ Restore</button>
+              </form>
+              <form method="POST" action="{{ url_for('complete_plan', plan_id=plan.id) }}" style="display:inline;">
+                <button type="submit" class="complete-btn">✓ Mark Done</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state" style="padding:2rem;">
+      <div class="empty-icon">🎉</div>
+      <h3>No skipped sessions</h3>
+      <p>You're on top of everything!</p>
+    </div>
+    {% endif %}
+  </div>
+
+
+
+</main>
+
+<script>
+
+
+// ── Calendar ─────────────────────────────────────────────────────────────────
+const calDataRaw  = {{ cal_data  | tojson }};
+const serverYear  = {{ cal_year  }};
+const serverMonth = {{ cal_month }};
+const serverToday = new Date("{{ today.isoformat() }}T00:00:00");
+let calYear  = serverYear;
+let calMonth = serverMonth; // 1-based
+
+function renderCal(year, month) {
+  const monthNames = ["January","February","March","April","May","June",
+                      "July","August","September","October","November","December"];
+  document.getElementById('calTitle').textContent = monthNames[month-1] + ' ' + year;
+
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+
+  const firstDay = new Date(year, month - 1, 1).getDay(); // 0=Sun
+  const offset   = (firstDay === 0) ? 6 : firstDay - 1;  // Mon-start
+  const daysInMonth = new Date(year, month, 0).getDate();
+
+  for (let b = 0; b < offset; b++) {
+    const blank = document.createElement('div');
+    blank.className = 'cal-day cal-blank';
+    grid.appendChild(blank);
+  }
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const cell = document.createElement('div');
+    cell.className = 'cal-day';
+    cell.textContent = day;
+
+    const isToday = (year === serverToday.getFullYear() &&
+                     month === serverToday.getMonth() + 1 &&
+                     day === serverToday.getDate());
+
+    // Only apply plan-data colouring for the server month
+    if (year === serverYear && month === serverMonth) {
+      const d = calDataRaw[day];
+      if (isToday) {
+        cell.classList.add('cal-today');
+      } else if (d) {
+        if (d.done === d.total && d.total > 0)      cell.classList.add('cal-done');
+        else if (d.skipped > 0 && d.done === 0)     cell.classList.add('cal-missed');
+        else if (d.done > 0)                         cell.classList.add('cal-partial');
+        else if (d.pending > 0)                      cell.classList.add('cal-pending');
+
+        // Dots
+        const dots = document.createElement('div');
+        dots.className = 'cal-dots';
+        if (d.done > 0) {
+          const dot = document.createElement('div');
+          dot.className = 'cal-dot';
+          dot.style.background = '#2d6a4f';
+          dots.appendChild(dot);
+        }
+        if (d.skipped > 0) {
+          const dot = document.createElement('div');
+          dot.className = 'cal-dot';
+          dot.style.background = '#ef4444';
+          dots.appendChild(dot);
+        }
+        if (d.pending > 0) {
+          const dot = document.createElement('div');
+          dot.className = 'cal-dot';
+          dot.style.background = '#f59e0b';
+          dots.appendChild(dot);
+        }
+        cell.appendChild(dots);
+      } else {
+        cell.classList.add('cal-noplan');
+      }
+    } else {
+      if (isToday) cell.classList.add('cal-today');
+      else cell.classList.add('cal-noplan');
+    }
+
+    grid.appendChild(cell);
+  }
+}
+
+function calPrev() {
+  calMonth--;
+  if (calMonth < 1) { calMonth = 12; calYear--; }
+  renderCal(calYear, calMonth);
+}
+function calNext() {
+  calMonth++;
+  if (calMonth > 12) { calMonth = 1; calYear++; }
+  renderCal(calYear, calMonth);
+}
+
+renderCal(calYear, calMonth);
+</script>
+
+</body>
+</html>
