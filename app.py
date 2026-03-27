@@ -42,8 +42,8 @@ try:
 except Exception as e:
     print(f"[Groq] Setup error: {e}")
 
-app = Flask(__name__)
-app.secret_key = 'smartstudyplanner_secret_2025'
+app = Flask(__name__, template_folder='TEMPLATES')
+app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key")
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///study_planner.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'uploads'

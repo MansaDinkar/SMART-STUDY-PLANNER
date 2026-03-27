@@ -7,3 +7,4 @@ google-cloud-firestore
 cloudinary
 groq
 python-dotenv
+gunicorn
