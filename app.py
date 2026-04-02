@@ -55,7 +55,10 @@ app.secret_key = os.environ.get("SECRET_KEY", "local-dev-secret-key-change-me")
 
 # ── SQLite (file lives next to app.py) ────────────────────────────────────────
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{os.path.join(BASE_DIR, 'study_planner.db')}"
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
+    "DATABASE_URL",
+    f"sqlite:///{os.path.join(BASE_DIR, 'study_planner.db')}"
+)
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # 16 MB
 
