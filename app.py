@@ -794,6 +794,15 @@ def chatbot_query():
     if not pdf:
         return jsonify({"error": "PDF not found."}), 404
 
+    # Handle greetings instantly without touching the PDF
+    greetings = {"hi", "hey", "hello", "hiya", "howdy", "sup", "yo", "hi there", "hey there", "hello there"}
+    if query.lower().strip() in greetings:
+        answer = f"Hey! 👋 I'm your study assistant for **{pdf.original_name}**. Ask me anything about this document — concepts, definitions, summaries, or specific topics!"
+        db.session.add(ChatMessage(pdf_id=pdf_id, user_id=uid, role="user", content=query))
+        db.session.add(ChatMessage(pdf_id=pdf_id, user_id=uid, role="assistant", content=answer))
+        db.session.commit()
+        return jsonify({"answer": answer})
+
     import tempfile
     pdf_url = pdf.file_url
     if not pdf_url:
@@ -808,7 +817,7 @@ def chatbot_query():
         os.remove(tmp_path)
     except Exception as e:
         return jsonify({"error": f"Could not fetch PDF: {e}"}), 500
-    
+
     if not pdf_text or len(pdf_text) < 50:
         return jsonify({"answer": "I couldn't read text from this PDF. It may be a scanned image PDF."})
 
@@ -816,31 +825,36 @@ def chatbot_query():
         ChatMessage.query
         .filter_by(pdf_id=pdf_id, user_id=uid)
         .order_by(ChatMessage.timestamp.desc())
-        .limit(6).all()
+        .limit(10).all()
     )
     recent.reverse()
     history_msgs = [{"role": m.role, "content": m.content} for m in recent]
 
-    system_prompt = f"""You are an intelligent study assistant helping a student understand their PDF notes.
+    system_prompt = f"""You are a smart, friendly study assistant — like ChatGPT but focused on helping students understand their study material.
 
-STRICT RULES:
-- Answer ONLY questions related to the PDF content below
-- If someone greets you (hello, hi, hey, etc.), respond warmly and briefly, then ask what they'd like to know from the PDF
-- If the question is unrelated to the PDF, politely say you can only answer questions about this document
-- Give clear, concise, student-friendly answers
-- Never dump raw text, table of contents, or numbered lists from the PDF directly
-- Always explain and summarize concepts properly in your own words
-- Keep answers focused and to the point
+You have been given the content of a PDF document called "{pdf.original_name}". Your job is to help the student understand it.
+
+HOW TO BEHAVE:
+- Answer questions in a clear, natural, conversational way — like a knowledgeable friend explaining things
+- When explaining concepts, use simple language and examples where helpful
+- If asked to summarize, give a well-structured summary in your own words
+- If asked to define terms, give clear definitions with context from the document
+- If a question is not covered in the PDF, say so honestly and offer what you do know
+- Never paste raw text, tables of contents, or numbered chapter lists directly — always explain and rephrase
+- Keep responses concise but complete — don't ramble
+- Use bullet points or numbered lists only when it genuinely helps clarity
+- Be encouraging and student-friendly
 
 PDF CONTENT:
-{pdf_text[:8000]}
+{pdf_text[:10000]}
 """
+
     messages = [{"role": "system", "content": system_prompt}]
     messages.extend(history_msgs)
     messages.append({"role": "user", "content": query})
 
     try:
-        answer = groq_chat(messages, max_tokens=1024, temperature=0.3)
+        answer = groq_chat(messages, max_tokens=1500, temperature=0.5)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
