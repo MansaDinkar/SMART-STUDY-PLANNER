@@ -292,7 +292,12 @@ def dashboard():
     today_pct   = round(today_done / today_total * 100) if today_total else 0
 
     streak = 0
-    check  = today - timedelta(days=1)
+    # Include today in streak if all today's plans are done
+    if today_plans and all(p.completed for p in today_plans):
+        streak += 1
+        check = today - timedelta(days=1)
+    else:
+        check = today - timedelta(days=1)
     while True:
         day_plans = [p for p in plans_all if p.schedule_date == check]
         if day_plans and all(p.completed for p in day_plans):
