@@ -821,12 +821,18 @@ def chatbot_query():
     recent.reverse()
     history_msgs = [{"role": m.role, "content": m.content} for m in recent]
 
-    system_prompt = f"""You are an intelligent study assistant.
-Answer questions ONLY based on the following PDF content.
-If the answer is not in the document, say so clearly.
-Be concise and student-friendly.
+    system_prompt = f"""You are an intelligent study assistant helping a student understand their PDF notes.
 
-PDF CONTENT (first 8000 chars):
+STRICT RULES:
+- Answer ONLY questions related to the PDF content below
+- If someone greets you (hello, hi, hey, etc.), respond warmly and briefly, then ask what they'd like to know from the PDF
+- If the question is unrelated to the PDF, politely say you can only answer questions about this document
+- Give clear, concise, student-friendly answers
+- Never dump raw text, table of contents, or numbered lists from the PDF directly
+- Always explain and summarize concepts properly in your own words
+- Keep answers focused and to the point
+
+PDF CONTENT:
 {pdf_text[:8000]}
 """
     messages = [{"role": "system", "content": system_prompt}]
