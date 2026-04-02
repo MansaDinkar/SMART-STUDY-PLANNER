@@ -5,3 +5,5 @@ PyMuPDF>=1.24
 pdfminer.six>=20221105
 werkzeug>=3.0
 python-dotenv>=1.0
+psycopg2-binary>=2.9
+gunicorn>=21.2
