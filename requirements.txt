@@ -1,10 +1,7 @@
-flask-sqlalchemy
-flask
-werkzeug
-PyPDF2
-firebase-admin
-google-cloud-firestore
-cloudinary
-groq
-python-dotenv
-gunicorn
+flask>=3.0
+flask-sqlalchemy>=3.1
+groq>=0.9
+PyMuPDF>=1.24
+pdfminer.six>=20221105
+werkzeug>=3.0
+python-dotenv>=1.0
