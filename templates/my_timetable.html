@@ -201,18 +201,12 @@
     <li><a href="{{ url_for('pdf_notes') }}"      class="nav-link"><span class="nav-icon">📄</span> PDF Notes</a></li>
     <li><a href="{{ url_for('chatbot') }}"        class="nav-link"><span class="nav-icon">🤖</span> PDF Chatbot</a></li>
   </ul>
-  {% if session.get('user_role') == 'admin' %}
-  <p class="nav-section-label">Admin</p>
-  <ul class="sidebar-nav">
-    <li><a href="{{ url_for('admin_panel') }}" class="nav-link"><span class="nav-icon">🛡️</span> Admin Panel</a></li>
-  </ul>
-  {% endif %}
   <div class="sidebar-bottom">
     <div class="user-card">
       <div class="user-avatar">{{ session.get('user_name','U')[0].upper() }}</div>
       <div>
         <div class="user-name">{{ session.get('user_name','User') }}</div>
-        <div class="user-role">{{ session.get('user_role','student') }}</div>
+        <div class="user-role">Student</div>
       </div>
     </div>
     <a href="{{ url_for('logout') }}" class="logout-link">⬅️ Logout</a>

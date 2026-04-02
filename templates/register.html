@@ -410,24 +410,6 @@
       </div>
     </div>
 
-    <!-- Role selector -->
-    <span class="role-section-label">I am a</span>
-    <div class="role-selector">
-      <div>
-        <input type="radio" class="role-option" name="role" id="role-student"
-               value="student" {% if request.form.get('role','student') == 'student' %}checked{% endif %}>
-        <label class="role-label" for="role-student">
-          <span class="role-icon">🎓</span> Student
-        </label>
-      </div>
-      <div>
-        <input type="radio" class="role-option" name="role" id="role-admin"
-               value="admin" {% if request.form.get('role') == 'admin' %}checked{% endif %}>
-        <label class="role-label" for="role-admin">
-          <span class="role-icon">🛡️</span> Admin
-        </label>
-      </div>
-    </div>
 
     <button type="submit" class="btn-submit">Create Account →</button>
 
